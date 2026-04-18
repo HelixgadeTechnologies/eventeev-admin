@@ -61,7 +61,7 @@ export default function LoginPage() {
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 lg:px-24 bg-white">
           <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-right-8 duration-1000">
             {/* Heading */}
-            <div className="text-center mb-12">
+            <div className="text-center mb-16">
               <h1 className="text-[32px] lg:text-[45px] font-bold text-[#0f172a] mb-4 font-feather tracking-tight">
                 Welcome back, Boss
               </h1>
@@ -69,7 +69,7 @@ export default function LoginPage() {
                 Access the most powerful enterprise event management network.
               </p>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-12">
               {/* Email Field */}
               <div className="relative group">
                 <div className="absolute top-2.5 left-5 text-[9px] font-bold text-[#94a3b8] uppercase tracking-widest">
