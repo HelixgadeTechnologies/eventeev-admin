@@ -20,8 +20,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f1f5f9] flex items-center justify-center p-4 lg:p-10 font-sans">
-      <div className="w-full max-w-[1280px] h-full min-h-[700px] lg:h-[840px] bg-white rounded-[32px] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] flex flex-col lg:flex-row">
+    <div className="min-h-screen w-full bg-white flex font-sans">
+      <div className="w-full flex flex-col lg:flex-row shadow-none overflow-hidden">
         
         {/* Left Panel: Hero Image & Testimonial */}
         <div className="relative w-full lg:w-[42%] h-[350px] lg:h-auto overflow-hidden">
@@ -69,7 +69,7 @@ export default function LoginPage() {
                 Access the most powerful enterprise event management network.
               </p>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email Field */}
               <div className="relative group">
                 <div className="absolute top-2.5 left-5 text-[9px] font-bold text-[#94a3b8] uppercase tracking-widest">
@@ -112,14 +112,14 @@ export default function LoginPage() {
               </div>
 
               {/* Extras: Forgot Only */}
-              <div className="flex flex-col pt-1">
+              <div className="flex flex-col">
                 <a href="#" className="text-sm font-bold text-violet-600 hover:text-violet-700 transition-colors w-fit ml-1">
                   Forgot password?
                 </a>
               </div>
 
               {/* Submit Button */}
-              <div className="pt-2">
+              <div>
                 <button
                   type="submit"
                   disabled={isLoading}
