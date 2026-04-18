@@ -2,12 +2,12 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("alex.jordan@gmail.com");
+  const [password, setPassword] = useState("password");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -21,140 +21,133 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden font-sans">
-      {/* Full-screen Background Image */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/login-bg-v2.png"
-          alt="Event Network Background"
-          fill
-          className="object-cover"
-          priority
-          quality={100}
-        />
-        {/* Subtle overlay to ensure card contrast if needed */}
-        <div className="absolute inset-0 bg-black/5 backdrop-blur-[1px]"></div>
-      </div>
-
-      {/* Content Layer: Right Aligned Card */}
-      <div className="relative z-10 flex min-h-screen w-full items-center justify-center lg:justify-end lg:pr-[120px] p-6 lg:p-12">
-        <div className="w-full max-w-[480px] rounded-[32px] bg-white px-10 py-16 shadow-[0_20px_50px_rgba(0,0,0,0.15)] animate-in fade-in slide-in-from-right-12 duration-1000">
-          {/* Brand Logo */}
-          <div className="mb-14">
-            <Image
-              src="/logo-black.svg"
-              alt="Eventeev"
-              width={160}
-              height={40}
-              className="h-10 w-auto"
-              priority
-            />
+    <div className="min-h-screen w-full bg-[#f1f5f9] flex items-center justify-center p-4 lg:p-10 font-sans">
+      <div className="w-full max-w-[1280px] h-full min-h-[700px] lg:h-[840px] bg-white rounded-[32px] overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] flex flex-col lg:flex-row">
+        
+        {/* Left Panel: Hero Image & Testimonial */}
+        <div className="relative w-full lg:w-[42%] h-[350px] lg:h-auto overflow-hidden">
+          <Image
+            src="/login-hero.png"
+            alt="Workspace Hero"
+            fill
+            className="object-cover"
+            priority
+          />
+          {/* Subtle gradient overlay to make text pop */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent lg:bg-gradient-to-b lg:from-black/40 lg:to-black/10" />
+          
+          {/* Brand Logo Overlay */}
+          <div className="absolute top-8 left-8 lg:top-12 lg:left-12">
+             <div className="flex items-center gap-3">
+                <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/20">
+                  <Image src="/logo-white.svg" alt="Eventeev" width={40} height={40} className="w-8 h-8" />
+                </div>
+                <span className="text-white font-bold text-2xl tracking-tight">Eventeev</span>
+             </div>
           </div>
 
-          {/* Heading */}
-          <div className="mb-14">
-            <h1 className="mb-4 text-[42px] font-bold tracking-tight text-[#0f172a] font-feather leading-[1.05]">
-              Sign in to Eventeev.
-            </h1>
-            <p className="text-[16px] text-[#64748b] font-medium">
-              Enterprise administration and event management portal.
-            </p>
+          {/* Testimonial Overlay */}
+          <div className="absolute bottom-8 left-8 right-8 lg:bottom-16 lg:left-16 lg:right-16 text-white animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            <h2 className="text-[28px] lg:text-[40px] font-bold leading-[1.2] mb-6 font-feather">
+              “Simply all the tools that my team and I need.”
+            </h2>
+            <div className="space-y-1">
+              <p className="font-bold text-lg lg:text-xl">Karen Yue</p>
+              <p className="text-white/70 font-medium text-sm lg:text-base">Director of Digital Marketing Technology</p>
+            </div>
           </div>
+        </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-10">
-            {/* Email Field */}
-            <div className="space-y-4">
-              <label
-                htmlFor="email"
-                className="block text-[14px] font-bold text-[#334155] ml-0.5"
-              >
-                Email
-              </label>
-              <div className="relative group">
+        {/* Right Panel: Login Form */}
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 lg:px-24 bg-white">
+          <div className="w-full max-w-[440px] animate-in fade-in slide-in-from-right-8 duration-1000">
+            {/* Heading */}
+            <div className="text-center mb-12">
+              <h1 className="text-[32px] lg:text-[45px] font-bold text-[#0f172a] mb-4 font-feather tracking-tight">
+                Welcome back, Boss
+              </h1>
+              <p className="text-[#64748b] text-[15px] lg:text-[17px] max-w-[360px] mx-auto font-medium leading-relaxed">
+                Access the most powerful enterprise event management network.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-7">
+              {/* Email Field */}
+              <div className="space-y-2.5">
+                <label htmlFor="email" className="block text-sm font-bold text-[#64748b] ml-1">
+                  Email
+                </label>
                 <input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email address"
+                  className="w-full bg-white border border-[#e2e8f0] rounded-xl px-5 py-4 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm"
+                  placeholder="name@company.com"
                   required
-                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-5 py-[15px] text-[15px] text-[#0f172a] placeholder-[#94a3b8] transition-all focus:border-[#ea580c] focus:ring-4 focus:ring-[#ea580c]/5 outline-none font-medium shadow-sm"
                 />
               </div>
-            </div>
 
-            {/* Password Field */}
-            <div className="space-y-4 pt-2">
-              <div className="flex items-center justify-between px-1">
-                <label
-                  htmlFor="password"
-                  className="block text-[14px] font-bold text-[#334155] ml-0.5"
-                >
+              {/* Password Field */}
+              <div className="space-y-2.5">
+                <label htmlFor="password" className="block text-sm font-bold text-[#64748b] ml-1">
                   Password
                 </label>
-                <a
-                  href="#"
-                  className="text-[13px] font-bold text-[#ea580c] hover:text-[#c2410c] transition-colors"
-                >
+                <div className="relative group">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-white border border-[#e2e8f0] rounded-xl px-5 py-4 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm"
+                    placeholder="••••••••"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#475569] transition-colors p-1"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Extras: Forgot & Remember */}
+              <div className="flex flex-col space-y-5 pt-1">
+                <a href="#" className="text-sm font-bold text-violet-600 hover:text-violet-700 transition-colors w-fit ml-1">
                   Forgot password?
                 </a>
+                
+                <div className="flex items-center justify-between py-2 border-t border-slate-50 mt-2 pt-4">
+                  <span className="text-sm font-bold text-[#475569]">Remember sign in details</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                    />
+                    <div className="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-[24px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                  </label>
+                </div>
               </div>
-              <div className="relative group">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  required
-                  className="w-full rounded-lg border border-[#e2e8f0] bg-white px-5 py-[15px] pr-12 text-[15px] text-[#0f172a] placeholder-[#94a3b8] transition-all focus:border-[#ea580c] focus:ring-4 focus:ring-[#ea580c]/5 outline-none font-medium shadow-sm"
-                />
+
+              {/* Submit Button */}
+              <div className="pt-8">
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#475569] transition-colors p-1"
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-4 rounded-full transition-all active:scale-[0.98] disabled:opacity-70 shadow-xl shadow-violet-600/20 flex items-center justify-center gap-2 text-base"
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {isLoading ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
+                  ) : (
+                    "Log in"
+                  )}
                 </button>
               </div>
-            </div>
-
-            {/* Keep me signed in */}
-            <div className="flex items-center gap-2 px-1 pt-2">
-              <input
-                type="checkbox"
-                id="remember"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-[#cbd5e1] text-[#ea580c] focus:ring-[#ea580c]/20 accent-[#ea580c]"
-              />
-              <label htmlFor="remember" className="text-[13px] font-bold text-[#64748b] cursor-pointer">
-                Keep me signed in
-              </label>
-            </div>
-
-            {/* Sign In Button */}
-            <div className="pt-10">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full rounded-lg bg-[#ea580c] py-[16px] text-[16px] font-bold text-white transition-all hover:bg-[#c2410c] active:scale-[0.99] disabled:opacity-70 flex items-center justify-center gap-2 shadow-xl shadow-[#ea580c]/20"
-              >
-                {isLoading ? (
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
-                ) : (
-                  "Sign in"
-                )}
-              </button>
-            </div>
-          </form>
-
-          {/* Footer Info */}
-          <div className="mt-16 text-center lg:text-left">
-            <p className="text-[12px] font-medium text-[#94a3b8]">
-              &copy; {new Date().getFullYear()} Eventeev. All rights reserved.
-            </p>
+            </form>
           </div>
         </div>
       </div>
