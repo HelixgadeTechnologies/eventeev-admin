@@ -8,14 +8,13 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("alex.jordan@gmail.com");
   const [password, setPassword] = useState("password");
-  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setTimeout(() => {
-      console.log("Login attempt:", { email, password, rememberMe });
+      console.log("Login attempt:", { email, password });
       setIsLoading(false);
     }, 1500);
   };
@@ -73,7 +72,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email Field */}
               <div className="relative group">
-                <div className="absolute top-3 left-5 text-[10px] font-bold text-[#94a3b8] uppercase tracking-widest">
+                <div className="absolute top-2.5 left-5 text-[9px] font-bold text-[#94a3b8] uppercase tracking-widest">
                   Email
                 </div>
                 <input
@@ -81,7 +80,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-[68px] bg-white border border-[#e2e8f0] rounded-xl px-5 pt-6 pb-2 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm"
+                  className="w-full h-[54px] bg-white border border-[#e2e8f0] rounded-xl px-5 pt-5 pb-1 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm"
                   placeholder="name@company.com"
                   required
                 />
@@ -89,7 +88,7 @@ export default function LoginPage() {
 
               {/* Password Field */}
               <div className="relative group">
-                <div className="absolute top-3 left-5 text-[10px] font-bold text-[#94a3b8] uppercase tracking-widest">
+                <div className="absolute top-2.5 left-5 text-[9px] font-bold text-[#94a3b8] uppercase tracking-widest">
                   Password
                 </div>
                 <div className="relative">
@@ -98,7 +97,7 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full h-[68px] bg-white border border-[#e2e8f0] rounded-xl px-5 pt-6 pb-2 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm"
+                    className="w-full h-[54px] bg-white border border-[#e2e8f0] rounded-xl px-5 pt-5 pb-1 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm"
                     placeholder="••••••••"
                     required
                   />
@@ -112,32 +111,19 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Extras: Forgot & Remember */}
-              <div className="flex flex-col space-y-5 pt-1">
+              {/* Extras: Forgot Only */}
+              <div className="flex flex-col pt-1">
                 <a href="#" className="text-sm font-bold text-violet-600 hover:text-violet-700 transition-colors w-fit ml-1">
                   Forgot password?
                 </a>
-                
-                <div className="flex items-center justify-between py-2 border-t border-slate-50 mt-2 pt-4">
-                  <span className="text-sm font-bold text-[#475569]">Remember sign in details</span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                    />
-                    <div className="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-[24px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
-                  </label>
-                </div>
               </div>
 
               {/* Submit Button */}
-              <div className="pt-6">
+              <div className="pt-2">
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-[64px] bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl transition-all active:scale-[0.98] disabled:opacity-70 shadow-xl shadow-violet-600/20 flex items-center justify-center gap-2 text-base"
+                  className="w-full h-[52px] bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl transition-all active:scale-[0.98] disabled:opacity-70 shadow-xl shadow-violet-600/20 flex items-center justify-center gap-2 text-base"
                 >
                   {isLoading ? (
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
