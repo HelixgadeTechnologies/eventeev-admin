@@ -69,7 +69,7 @@ export default function LoginPage() {
                 Access the most powerful enterprise event management network.
               </p>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-8">
               {/* Email Field */}
               <div className="relative group">
                 <div className="absolute top-2.5 left-5 text-[9px] font-bold text-[#94a3b8] uppercase tracking-widest">
@@ -80,7 +80,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-[54px] bg-white border border-[#e2e8f0] rounded-xl px-5 pt-5 pb-1 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm"
+                  className="w-full h-[54px] bg-white border border-[#e2e8f0] rounded-xl px-5 pt-5 pb-1 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm font-sans"
                   placeholder="name@company.com"
                   required
                 />
@@ -97,7 +97,7 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full h-[54px] bg-white border border-[#e2e8f0] rounded-xl px-5 pt-5 pb-1 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm"
+                    className="w-full h-[54px] bg-white border border-[#e2e8f0] rounded-xl px-5 pt-5 pb-1 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm font-sans"
                     placeholder="••••••••"
                     required
                   />
