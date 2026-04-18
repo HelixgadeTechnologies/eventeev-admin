@@ -70,36 +70,35 @@ export default function LoginPage() {
                 Access the most powerful enterprise event management network.
               </p>
             </div>
-
-            <form onSubmit={handleSubmit} className="space-y-7">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email Field */}
-              <div className="space-y-2.5">
-                <label htmlFor="email" className="block text-sm font-bold text-[#64748b] ml-1">
+              <div className="relative group">
+                <div className="absolute top-3 left-5 text-[10px] font-bold text-[#94a3b8] uppercase tracking-widest">
                   Email
-                </label>
+                </div>
                 <input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white border border-[#e2e8f0] rounded-xl px-5 py-4 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm"
+                  className="w-full h-[68px] bg-white border border-[#e2e8f0] rounded-xl px-5 pt-6 pb-2 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm"
                   placeholder="name@company.com"
                   required
                 />
               </div>
 
               {/* Password Field */}
-              <div className="space-y-2.5">
-                <label htmlFor="password" className="block text-sm font-bold text-[#64748b] ml-1">
+              <div className="relative group">
+                <div className="absolute top-3 left-5 text-[10px] font-bold text-[#94a3b8] uppercase tracking-widest">
                   Password
-                </label>
-                <div className="relative group">
+                </div>
+                <div className="relative">
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-white border border-[#e2e8f0] rounded-xl px-5 py-4 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm"
+                    className="w-full h-[68px] bg-white border border-[#e2e8f0] rounded-xl px-5 pt-6 pb-2 text-[#0f172a] font-medium outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-600 transition-all text-sm shadow-sm"
                     placeholder="••••••••"
                     required
                   />
@@ -134,11 +133,11 @@ export default function LoginPage() {
               </div>
 
               {/* Submit Button */}
-              <div className="pt-8">
+              <div className="pt-6">
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-4 rounded-full transition-all active:scale-[0.98] disabled:opacity-70 shadow-xl shadow-violet-600/20 flex items-center justify-center gap-2 text-base"
+                  className="w-full h-[64px] bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl transition-all active:scale-[0.98] disabled:opacity-70 shadow-xl shadow-violet-600/20 flex items-center justify-center gap-2 text-base"
                 >
                   {isLoading ? (
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
