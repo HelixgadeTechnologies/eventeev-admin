@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   UserCheck, 
   Users, 
@@ -9,21 +9,55 @@ import {
   Mail,
   Calendar,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
-const waitlistUsers = [
-  { id: 1, name: 'David Miller', email: 'd.miller@gmail.com', signUpDate: 'Apr 12, 2024', status: 'Pending', type: 'Attendee' },
-  { id: 2, name: 'Elena Rodriguez', email: 'elena.r@yahoo.com', signUpDate: 'Apr 13, 2024', status: 'Pending', type: 'Organizer' },
-  { id: 3, name: 'James Wilson', email: 'james.wilson@outlook.com', signUpDate: 'Apr 15, 2024', status: 'Pending', type: 'Attendee' },
-  { id: 4, name: 'Sophia Chen', email: 's.chen@techcorp.io', signUpDate: 'Apr 18, 2024', status: 'Pending', type: 'Organizer' },
-  { id: 5, name: 'Marcus Thorne', email: 'marcus@startup.ly', signUpDate: 'Apr 20, 2024', status: 'Pending', type: 'Attendee' },
-  { id: 6, name: 'Isabella Ross', email: 'i.ross@design.com', signUpDate: 'Apr 22, 2024', status: 'Pending', type: 'Attendee' },
-];
+interface WaitlistEntry {
+  id: number | string;
+  name: string;
+  email: string;
+  created_at?: string;
+  signUpDate?: string;
+  type: string;
+  status?: string;
+}
 
 export default function WaitlistManagementPage() {
+  const router = useRouter();
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    const fetchWaitlist = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.get<WaitlistEntry[]>('/waitlist');
+        setWaitlist(data);
+      } catch (err: any) {
+        console.error("Fetch Waitlist Error:", err);
+        setError(err.message || "Failed to load waitlist.");
+        if (err.message.includes('401')) {
+          router.push('/login');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWaitlist();
+  }, [router]);
+
+  const filteredWaitlist = waitlist.filter(entry => {
+    return entry.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+           entry.email.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -43,7 +77,7 @@ export default function WaitlistManagementPage() {
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { label: 'Pending Approvals', value: '1,248', icon: Clock, color: 'orange' },
+          { label: 'Pending Approvals', value: waitlist.length.toString(), icon: Clock, color: 'orange' },
           { label: 'Approved Today', value: '154', icon: CheckCircle2, color: 'green' },
           { label: 'Waitlist Growth', value: '+12%', icon: Users, color: 'blue' },
         ].map((stat, i) => (
@@ -75,65 +109,89 @@ export default function WaitlistManagementPage() {
         />
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">User</th>
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Requested Date</th>
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Type</th>
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {waitlistUsers.map((item) => (
-                <motion.tr 
-                  key={item.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="hover:bg-slate-50/50 transition-colors group"
-                >
-                  <td className="px-8 py-5">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm border border-blue-100">
-                        {item.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{item.name}</p>
-                        <p className="text-xs text-slate-500 font-medium">{item.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-8 py-5">
-                    <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
-                      <Calendar size={14} className="text-blue-600" />
-                      {item.signUpDate}
-                    </div>
-                  </td>
-                  <td className="px-8 py-5 text-center">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${
-                      item.type === 'Organizer' ? 'text-purple-600 bg-purple-50 border border-purple-100' : 'text-blue-600 bg-blue-50 border border-blue-100'
-                    }`}>
-                      {item.type}
-                    </span>
-                  </td>
-                  <td className="px-8 py-5 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button className="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-sm shadow-blue-600/10">
-                        Approve
-                      </button>
-                      <button className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all">
-                        <X size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-100 text-red-600 px-6 py-4 rounded-2xl text-sm font-bold flex items-center gap-3">
+          <AlertCircle size={20} />
+          <span className="flex-1">{error}</span>
+          <button onClick={() => window.location.reload()} className="underline underline-offset-4">Retry</button>
         </div>
+      )}
+
+      {/* Table */}
+      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden relative min-h-[400px]">
+        {isLoading ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/50 backdrop-blur-sm z-10">
+            <Loader2 className="animate-spin text-primary mb-4" size={40} />
+            <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Fetching Waitlist Data...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/50">
+                  <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">User</th>
+                  <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Requested Date</th>
+                  <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Type</th>
+                  <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {filteredWaitlist.length > 0 ? (
+                  filteredWaitlist.map((item) => (
+                    <motion.tr 
+                      key={item.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="hover:bg-slate-50/50 transition-colors group"
+                    >
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-primary font-bold text-sm border border-orange-100">
+                            {item.name.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{item.name}</p>
+                            <p className="text-xs text-slate-500 font-medium">{item.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
+                          <Calendar size={14} className="text-primary" />
+                          {item.created_at ? new Date(item.created_at).toLocaleDateString() : (item.signUpDate || 'N/A')}
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-center">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${
+                          item.type === 'Organizer' ? 'text-purple-600 bg-purple-50 border border-purple-100' : 'text-blue-600 bg-blue-50 border border-blue-100'
+                        }`}>
+                          {item.type}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button className="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-sm shadow-blue-600/10">
+                            Approve
+                          </button>
+                          <button className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all">
+                            <X size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="px-8 py-20 text-center text-slate-400 font-medium">
+                      Waitlist is currently empty.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
