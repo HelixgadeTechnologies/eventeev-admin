@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, Mail, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("admin@eventeev.com");
   const [password, setPassword] = useState("password");
@@ -13,9 +15,10 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    // Simulate API call
     setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 1500);
+      router.push("/dashboard");
+    }, 1000);
   };
 
   return (
