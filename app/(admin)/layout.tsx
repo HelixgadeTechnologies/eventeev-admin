@@ -1,7 +1,6 @@
 'use client';
 
 import Sidebar from '@/components/Sidebar';
-import TopBar from '@/components/TopBar';
 
 export default function AdminLayout({
   children,
@@ -11,9 +10,9 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <TopBar />
-      <main className="pl-64 pt-20">
-        <div className="p-8 animate-fade-in">
+      {/* Shifted main content to account for floating sidebar */}
+      <main className="pl-80 pr-6 py-6">
+        <div className="animate-fade-in">
           {children}
         </div>
       </main>

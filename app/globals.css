@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #faf9f6;
+  --foreground: #1a1a1a;
   
   --card-bg: #ffffff;
-  --card-border: #e2e8f0;
+  --card-border: #f1f1f1;
   
-  --primary: #2563eb; /* Vibrant Blue */
-  --primary-hover: #1d4ed8;
-  --accent: #f59e0b; /* Brand Orange for accents */
+  --primary: #f97316; /* Orange */
+  --primary-hover: #ea580c;
+  --accent: #fef3c7; /* Soft Orange/Yellow */
   
-  --text-muted: #64748b;
-  --border: #e2e8f0;
+  --text-muted: #737373;
+  --border: #f1f1f1;
 }
 
 @theme inline {
@@ -36,49 +36,31 @@
 }
 
 @layer utilities {
-  .glass {
+  .card-premium {
     background: #ffffff;
+    border-radius: 2rem;
     border: 1px solid var(--border);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
+    padding: 2rem;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
   }
   
-  .glass-hover {
-    transition: all 0.3s ease;
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium;
   }
   
-  .glass-hover:hover {
-    background: #ffffff;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    transform: translateY(-2px);
+  .sidebar-item-active {
+    @apply text-primary bg-orange-50 font-bold;
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
   
   .bg-gradient-primary {
-    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
   }
-
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
-  }
-
-  .animate-slide-up {
-    animation: slideUp 0.5s ease-out forwards;
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Custom Scrollbar */
@@ -89,9 +71,9 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #e5e5e5;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #d4d4d4;
 }

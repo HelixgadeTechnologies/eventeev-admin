@@ -5,20 +5,41 @@ import { useRouter } from "next/navigation";
 import { Settings, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import Logo from "@/components/Logo";
+
+import { api } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("admin@eventeev.com");
-  const [password, setPassword] = useState("password");
+  const [password, setPassword] = useState("Qwerty12345@@");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
-      router.push("/dashboard");
-    }, 1000);
+    setError(null);
+    
+    try {
+      const response = await api.post<{ token: string }>('/auth/login', {
+        email,
+        password
+      }, { auth: false });
+
+      if (response.token) {
+        localStorage.setItem('eventeev_admin_token', response.token);
+        router.push("/dashboard");
+      } else {
+        throw new Error("Invalid response from server");
+      }
+    } catch (err: any) {
+      console.error("Login Error:", err);
+      setError(err.message || "Failed to sign in. Please check your credentials.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -26,7 +47,7 @@ export default function LoginPage() {
       {/* Left Panel: Architectural Image */}
       <div className="hidden lg:block lg:w-[60%] relative h-full">
         <Image
-          src="/login-architecture.png"
+          src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2070"
           alt="Modern Architecture"
           fill
           className="object-cover"
@@ -45,22 +66,7 @@ export default function LoginPage() {
           <div className="w-full max-w-sm">
             {/* Logo */}
             <div className="flex flex-col items-center mb-10">
-              <div className="relative w-12 h-12 mb-6">
-                <svg viewBox="0 0 40 40" className="w-full h-full text-slate-800">
-                  <path 
-                    d="M20 4L36 32H4L20 4Z" 
-                    fill="currentColor" 
-                    className="opacity-10"
-                  />
-                  <circle cx="20" cy="18" r="6" fill="currentColor" />
-                  <path 
-                    d="M20 28C24.4183 28 28 24.4183 28 20" 
-                    stroke="currentColor" 
-                    strokeWidth="4" 
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </div>
+              <Logo className="mb-6 scale-125" />
               <h1 className="text-2xl font-bold text-slate-800">Sign in</h1>
             </div>
 
@@ -102,6 +108,13 @@ export default function LoginPage() {
                   Forgot password?
                 </a>
               </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-xs font-bold animate-shake">
+                  {error}
+                </div>
+              )}
 
               {/* Sign In Button */}
               <button
