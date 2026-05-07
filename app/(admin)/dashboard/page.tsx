@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { 
   Users, 
   Calendar, 
@@ -11,7 +12,10 @@ import {
   Clock,
   ChevronDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Loader2,
+  TrendingUp,
+  ShieldCheck
 } from 'lucide-react';
 import { 
   XAxis, 
@@ -26,11 +30,21 @@ import {
   Cell
 } from 'recharts';
 import { motion } from 'framer-motion';
+import { api } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+interface Stats {
+  totalUsers: number;
+  totalAdmins: number;
+  totalEvents: number;
+  totalAttendees: number;
+  potentialRevenue: number;
 }
 
 const userGrowthData = [
@@ -43,38 +57,60 @@ const userGrowthData = [
   { name: 'Jul', value: 1200 },
 ];
 
-const eventCategoryData = [
-  { name: 'Tech', value: 400 },
-  { name: 'Music', value: 300 },
-  { name: 'Arts', value: 300 },
-  { name: 'Sports', value: 200 },
-];
-
 const COLORS = ['#f97316', '#fb923c', '#fdba74', '#fed7aa'];
 
-const recentActivity = [
-  { id: 1, title: 'New Event Created', desc: 'Global Tech Summit 2024 has been published.', time: '2 mins ago', icon: Calendar, color: 'orange' },
-  { id: 2, title: 'User Verification', desc: 'Elena Rodriguez verified her organizer account.', time: '15 mins ago', icon: CheckCircle2, color: 'green' },
-  { id: 3, title: 'Payout Processed', desc: 'Revenue payout for Neon Nights processed successfully.', time: '1 hour ago', icon: DollarSign, color: 'blue' },
-  { id: 4, title: 'Waitlist Alert', desc: '50 new users are waiting for approval.', time: '3 hours ago', icon: Clock, color: 'purple' },
-];
-
 export default function DashboardPage() {
+  const router = useRouter();
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.get<Stats>('/admin/stats');
+        setStats(data);
+      } catch (err: any) {
+        console.error("Fetch Stats Error:", err);
+        setError(err.message || "Failed to load platform stats.");
+        if (err.message.includes('401')) {
+          router.push('/login');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [router]);
+
+  if (isLoading) {
+    return (
+      <div className="h-[80vh] flex flex-col items-center justify-center">
+        <Loader2 className="animate-spin text-primary mb-4" size={48} />
+        <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Compiling Analytics...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Top Row: Reverting to old stats in new design */}
+    <div className="space-y-6 animate-fade-in">
+      {/* Top Row: Live Stats from /admin/stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Total Users */}
         <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm relative overflow-hidden group">
           <p className="text-lg font-bold text-slate-900 mb-4">Total Users</p>
           <div className="flex items-center gap-4 mb-2">
-            <h2 className="text-6xl font-black text-slate-900 tracking-tighter">12,482</h2>
+            <h2 className="text-6xl font-black text-slate-900 tracking-tighter">
+              {stats?.totalUsers?.toLocaleString() || '0'}
+            </h2>
             <div className="flex items-center text-green-500 font-bold text-lg">
               <ArrowUp size={24} />
               <span>12%</span>
             </div>
           </div>
-          <p className="text-sm text-slate-400 font-medium mb-12">Increase in registrations compared to last week</p>
+          <p className="text-sm text-slate-400 font-medium mb-12">Growth includes {stats?.totalAdmins || 0} platform admins</p>
           <a href="/users" className="text-sm font-bold text-orange-600 hover:underline flex items-center gap-2">
             View all users <ArrowUpRight size={14} />
           </a>
@@ -84,13 +120,15 @@ export default function DashboardPage() {
         <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm relative overflow-hidden group">
           <p className="text-lg font-bold text-slate-900 mb-4">Active Events</p>
           <div className="flex items-center gap-4 mb-2">
-            <h2 className="text-6xl font-black text-slate-900 tracking-tighter">842</h2>
+            <h2 className="text-6xl font-black text-slate-900 tracking-tighter">
+              {stats?.totalEvents?.toLocaleString() || '0'}
+            </h2>
             <div className="flex items-center text-green-500 font-bold text-lg">
               <ArrowUp size={24} />
               <span>5%</span>
             </div>
           </div>
-          <p className="text-sm text-slate-400 font-medium mb-12">Total events currently live on the platform</p>
+          <p className="text-sm text-slate-400 font-medium mb-12">Live events currently accepting registrations</p>
           <a href="/events" className="text-sm font-bold text-orange-600 hover:underline flex items-center gap-2">
             Manage events <ArrowUpRight size={14} />
           </a>
@@ -100,13 +138,15 @@ export default function DashboardPage() {
         <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm relative overflow-hidden group">
           <p className="text-lg font-bold text-slate-900 mb-4">Total Attendees</p>
           <div className="flex items-center gap-4 mb-2">
-            <h2 className="text-6xl font-black text-slate-900 tracking-tighter">45.2K</h2>
+            <h2 className="text-6xl font-black text-slate-900 tracking-tighter">
+              {stats?.totalAttendees ? (stats.totalAttendees / 1000).toFixed(1) + 'K' : '0'}
+            </h2>
             <div className="flex items-center text-green-500 font-bold text-lg">
               <ArrowUp size={24} />
               <span>8%</span>
             </div>
           </div>
-          <p className="text-sm text-slate-400 font-medium mb-12">Ticket holders across all active events</p>
+          <p className="text-sm text-slate-400 font-medium mb-12">Verified ticket holders across the platform</p>
           <a href="#" className="text-sm font-bold text-orange-600 hover:underline flex items-center gap-2">
             Attendance report <ArrowUpRight size={14} />
           </a>
@@ -115,56 +155,15 @@ export default function DashboardPage() {
 
       {/* Middle Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity (Replacing Customers) */}
+        {/* User Growth Chart */}
         <div className="lg:col-span-2 bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xl font-bold text-slate-900">Recent Activity</h3>
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900">
-              Filter by <span className="text-slate-900">All</span> <ChevronDown size={14} />
-            </div>
-          </div>
-          <div className="space-y-4">
-            {recentActivity.map((activity) => (
-              <motion.div 
-                key={activity.id}
-                whileHover={{ x: 4 }}
-                className="flex items-center justify-between p-4 rounded-[1.5rem] hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={cn(
-                    "w-12 h-12 rounded-2xl flex items-center justify-center border",
-                    activity.color === 'orange' ? "bg-orange-50 text-orange-600 border-orange-100" :
-                    activity.color === 'green' ? "bg-green-50 text-green-600 border-green-100" :
-                    activity.color === 'blue' ? "bg-blue-50 text-blue-600 border-blue-100" :
-                    "bg-purple-50 text-purple-600 border-purple-100"
-                  )}>
-                    <activity.icon size={20} />
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-900 text-sm">{activity.title}</p>
-                    <p className="text-xs text-slate-400 font-medium">{activity.desc}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{activity.time}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          <a href="#" className="inline-block mt-8 text-sm font-bold text-orange-600 hover:underline">
-            View activity log →
-          </a>
-        </div>
-
-        {/* User Growth Chart */}
-        <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xl font-bold text-slate-900">User Growth</h3>
+            <h3 className="text-xl font-bold text-slate-900">Platform Growth</h3>
             <div className="text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900">
               Monthly <ChevronDown size={14} className="inline ml-1" />
             </div>
           </div>
-          <div className="h-[250px] w-full">
+          <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={userGrowthData}>
                 <defs>
@@ -184,72 +183,59 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </div>
         </div>
+
+        {/* Potential Revenue Highlight */}
+        <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8">
+            <TrendingUp className="text-orange-500 opacity-5" size={140} />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Potential Revenue</p>
+            <h2 className="text-5xl font-black text-slate-900 tracking-tighter mb-4">
+              ${stats?.potentialRevenue ? (stats.potentialRevenue / 1000000).toFixed(1) + 'M' : '0.0'}
+            </h2>
+            <div className="flex items-center gap-2 text-green-500 font-bold text-sm">
+              <ArrowUpRight size={18} />
+              <span>12.5% increase</span>
+            </div>
+          </div>
+          
+          <div className="space-y-4 mt-8">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Market Cap</span>
+              <span className="text-sm font-bold text-slate-900">$2.4M</span>
+            </div>
+            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-full bg-orange-500 w-[65%]" />
+            </div>
+            <p className="text-[10px] text-slate-400 font-medium">Estimated projection for current fiscal quarter.</p>
+          </div>
+        </div>
       </div>
 
       {/* Bottom Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Potential Revenue */}
-        <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-1">Potential Revenue</h3>
-          <p className="text-xs text-slate-400 font-bold mb-4">Projected for Q2</p>
-          <div className="flex items-baseline gap-2">
-            <h4 className="text-3xl font-black text-slate-900">$1.2M</h4>
-            <span className="text-red-500 font-bold text-xs flex items-center">
-              <ArrowDown size={12} /> 2%
-            </span>
+        <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 rounded-2xl bg-orange-50 text-orange-600 border border-orange-100">
+            <ShieldCheck size={24} />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Platform Admins</p>
+            <h3 className="text-2xl font-bold text-slate-900">{stats?.totalAdmins || 0}</h3>
           </div>
         </div>
 
-        {/* Event Distribution */}
-        <div className="md:col-span-2 bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm flex items-center justify-between">
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-slate-900 mb-6">Event Categories</h3>
-            <div className="space-y-3">
-              {eventCategoryData.map((item, idx) => (
-                <div key={item.name} className="flex items-center justify-between pr-8">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx] }} />
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{item.name}</span>
-                  </div>
-                  <span className="text-sm font-bold text-slate-900">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="h-[150px] w-[150px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={eventCategoryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={60}
-                  paddingAngle={8}
-                  dataKey="value"
-                >
-                  {eventCategoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Quick Links */}
-        <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-6">Quick Links</h3>
-          <div className="flex flex-wrap gap-2">
-            {['Reports', 'Waitlist', 'Payouts', 'Moderation'].map((link) => (
-              <div key={link} className="px-3 py-2 bg-orange-50 text-orange-600 text-[10px] font-black rounded-full uppercase tracking-widest cursor-pointer hover:bg-orange-100 transition-colors">
-                {link}
-              </div>
-            ))}
-          </div>
+        <div className="md:col-span-3 bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm flex items-center justify-around">
+           {['Waitlist', 'Payouts', 'Moderation', 'Logs'].map((item) => (
+             <div key={item} className="flex flex-col items-center gap-2 cursor-pointer group">
+               <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-orange-50 group-hover:text-orange-600 transition-all border border-transparent group-hover:border-orange-100">
+                 <Clock size={20} />
+               </div>
+               <span className="text-[10px] font-bold text-slate-400 group-hover:text-slate-900 uppercase tracking-widest">{item}</span>
+             </div>
+           ))}
         </div>
       </div>
     </div>
   );
 }
-

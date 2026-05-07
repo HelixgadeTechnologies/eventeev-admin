@@ -31,28 +31,43 @@ export default function WaitlistManagementPage() {
   const router = useRouter();
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    const fetchWaitlist = async () => {
-      try {
-        setIsLoading(true);
-        const data = await api.get<WaitlistEntry[]>('/waitlist');
-        setWaitlist(data);
-      } catch (err: any) {
-        console.error("Fetch Waitlist Error:", err);
-        setError(err.message || "Failed to load waitlist.");
-        if (err.message.includes('401')) {
-          router.push('/login');
-        }
-      } finally {
-        setIsLoading(false);
+  const fetchWaitlist = async () => {
+    try {
+      setIsLoading(true);
+      const data = await api.get<WaitlistEntry[]>('/admin/waitlist');
+      setWaitlist(data);
+    } catch (err: any) {
+      console.error("Fetch Waitlist Error:", err);
+      setError(err.message || "Failed to load waitlist.");
+      if (err.message.includes('401')) {
+        router.push('/login');
       }
-    };
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchWaitlist();
   }, [router]);
+
+  const handleApproveUser = async (id: string | number) => {
+    try {
+      setActionLoading(`approve-${id}`);
+      await api.post(`/admin/waitlist/approve/${id}`, {});
+      setSuccess("User approved and granted platform access.");
+      fetchWaitlist();
+    } catch (err: any) {
+      setError(err.message || "Failed to approve user.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const filteredWaitlist = waitlist.filter(entry => {
     return entry.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -60,7 +75,27 @@ export default function WaitlistManagementPage() {
   });
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in relative">
+      {/* Notifications */}
+      <AnimatePresence>
+        {(error || success) && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`fixed top-24 right-8 z-50 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold text-sm ${
+              error ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'
+            }`}
+          >
+            {error ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}
+            <span>{error || success}</span>
+            <button onClick={() => { setError(null); setSuccess(null); }} className="ml-4 hover:opacity-70">
+              <X size={18} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -109,21 +144,12 @@ export default function WaitlistManagementPage() {
         />
       </div>
 
-      {/* Error State */}
-      {error && (
-        <div className="bg-red-50 border border-red-100 text-red-600 px-6 py-4 rounded-2xl text-sm font-bold flex items-center gap-3">
-          <AlertCircle size={20} />
-          <span className="flex-1">{error}</span>
-          <button onClick={() => window.location.reload()} className="underline underline-offset-4">Retry</button>
-        </div>
-      )}
-
       {/* Table */}
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden relative min-h-[400px]">
         {isLoading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/50 backdrop-blur-sm z-10">
             <Loader2 className="animate-spin text-primary mb-4" size={40} />
-            <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Fetching Waitlist Data...</p>
+            <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Refreshing Waitlist...</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -171,7 +197,12 @@ export default function WaitlistManagementPage() {
                       </td>
                       <td className="px-8 py-5 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button className="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-sm shadow-blue-600/10">
+                          <button 
+                            disabled={actionLoading === `approve-${item.id}`}
+                            onClick={() => handleApproveUser(item.id)}
+                            className="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-sm shadow-blue-600/10 flex items-center gap-2"
+                          >
+                            {actionLoading === `approve-${item.id}` ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />}
                             Approve
                           </button>
                           <button className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all">

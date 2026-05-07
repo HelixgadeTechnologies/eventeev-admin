@@ -12,9 +12,11 @@ import {
   Calendar as CalendarIcon,
   MapPin,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2,
+  X
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
@@ -36,29 +38,46 @@ export default function EventManagementPage() {
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        setIsLoading(true);
-        const data = await api.get<Event[]>('/events');
-        setEvents(data);
-      } catch (err: any) {
-        console.error("Fetch Events Error:", err);
-        setError(err.message || "Failed to load events.");
-        if (err.message.includes('401')) {
-          router.push('/login');
-        }
-      } finally {
-        setIsLoading(false);
+  const fetchEvents = async () => {
+    try {
+      setIsLoading(true);
+      const data = await api.get<Event[]>('/admin/events');
+      setEvents(data);
+    } catch (err: any) {
+      console.error("Fetch Events Error:", err);
+      setError(err.message || "Failed to load events.");
+      if (err.message.includes('401')) {
+        router.push('/login');
       }
-    };
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchEvents();
   }, [router]);
+
+  const handleDeleteEvent = async (id: string | number) => {
+    if (!confirm("Are you sure you want to force delete this event? This action cannot be undone.")) return;
+    
+    try {
+      setActionLoading(`delete-${id}`);
+      await api.delete(`/admin/events/${id}`);
+      setSuccess("Event successfully removed from the platform.");
+      fetchEvents();
+    } catch (err: any) {
+      setError(err.message || "Failed to delete event.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const filteredEvents = events.filter(event => {
     const title = event.title || "";
@@ -79,12 +98,32 @@ export default function EventManagementPage() {
       'from-rose-400 to-red-600',
       'from-amber-400 to-orange-500'
     ];
-    const index = typeof id === 'number' ? id % gradients.length : id.length % gradients.length;
+    const index = typeof id === 'number' ? id % gradients.length : id.toString().length % gradients.length;
     return `bg-gradient-to-br ${gradients[index]}`;
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in relative">
+      {/* Notifications */}
+      <AnimatePresence>
+        {(error || success) && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`fixed top-24 right-8 z-50 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold text-sm ${
+              error ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'
+            }`}
+          >
+            {error ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}
+            <span>{error || success}</span>
+            <button onClick={() => { setError(null); setSuccess(null); }} className="ml-4 hover:opacity-70">
+              <X size={18} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -119,20 +158,11 @@ export default function EventManagementPage() {
         />
       </div>
 
-      {/* Error State */}
-      {error && (
-        <div className="bg-red-50 border border-red-100 text-red-600 px-6 py-4 rounded-2xl text-sm font-bold flex items-center gap-3">
-          <AlertCircle size={20} />
-          <span className="flex-1">{error}</span>
-          <button onClick={() => window.location.reload()} className="underline underline-offset-4">Retry</button>
-        </div>
-      )}
-
-      {/* Loading State */}
+      {/* Events Grid/List */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="animate-spin text-primary mb-4" size={48} />
-          <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Loading Events Data...</p>
+          <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Refreshing Event Registry...</p>
         </div>
       ) : (
         <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
@@ -152,7 +182,7 @@ export default function EventManagementPage() {
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
                   )}
                   <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 text-[10px] font-bold text-slate-800 uppercase tracking-wider shadow-sm">
-                    Live
+                    Platform Event
                   </div>
                 </div>
 
@@ -199,11 +229,12 @@ export default function EventManagementPage() {
                     <button className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 rounded-xl transition-all text-xs border border-slate-100">
                       Details
                     </button>
-                    <button className="flex-1 bg-orange-50 hover:bg-orange-100 text-primary font-bold py-3 rounded-xl transition-all text-xs border border-orange-100">
-                      Manage
-                    </button>
-                    <button className="p-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all border border-red-100">
-                      <Trash2 size={16} />
+                    <button 
+                      onClick={() => handleDeleteEvent(event.id)}
+                      disabled={actionLoading === `delete-${event.id}`}
+                      className="p-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all border border-red-100"
+                    >
+                      {actionLoading === `delete-${event.id}` ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                     </button>
                   </div>
                 </div>
