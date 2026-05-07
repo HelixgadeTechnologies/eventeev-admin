@@ -16,38 +16,43 @@ interface StatCardProps {
 
 export default function StatCard({ label, value, icon: Icon, trend, color }: StatCardProps) {
   const colors = {
-    blue: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
-    purple: 'text-purple-400 bg-purple-400/10 border-purple-400/20',
-    green: 'text-green-400 bg-green-400/10 border-green-400/20',
-    orange: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
+    blue: 'text-blue-600 bg-blue-50 border-blue-100',
+    purple: 'text-purple-600 bg-purple-50 border-purple-100',
+    green: 'text-green-600 bg-green-50 border-green-100',
+    orange: 'text-orange-600 bg-orange-50 border-orange-100',
   };
 
   return (
     <motion.div 
-      whileHover={{ y: -5 }}
-      className="glass p-6 rounded-3xl group"
+      whileHover={{ y: -4 }}
+      className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm transition-all hover:shadow-md group"
     >
       <div className="flex items-start justify-between mb-4">
         <div className={`p-3 rounded-2xl border ${colors[color]}`}>
           <Icon size={24} />
         </div>
         {trend && (
-          <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${trend.isUp ? 'text-green-400 bg-green-400/10' : 'text-red-400 bg-red-400/10'}`}>
-            {trend.isUp ? '+' : '-'}{trend.value}%
+          <div className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${trend.isUp ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+            {trend.isUp ? '↑' : '↓'} {trend.value}%
           </div>
         )}
       </div>
       <div>
-        <p className="text-text-muted text-sm font-medium mb-1">{label}</p>
-        <h3 className="text-2xl font-bold text-white tracking-tight">{value}</h3>
+        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">{label}</p>
+        <h3 className="text-2xl font-bold text-slate-900 tracking-tight">{value}</h3>
       </div>
       
-      <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+      <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: '70%' }}
           transition={{ duration: 1, delay: 0.5 }}
-          className={`h-full rounded-full bg-gradient-to-r ${color === 'blue' ? 'from-blue-500 to-blue-400' : 'from-purple-500 to-purple-400'}`}
+          className={`h-full rounded-full ${
+            color === 'blue' ? 'bg-blue-600' : 
+            color === 'purple' ? 'bg-purple-600' : 
+            color === 'green' ? 'bg-green-600' : 
+            'bg-orange-600'
+          }`}
         />
       </div>
     </motion.div>

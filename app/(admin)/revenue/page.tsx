@@ -21,6 +21,7 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
+import { motion } from 'framer-motion';
 
 const revenueData = [
   { name: 'Mon', total: 4500 },
@@ -44,19 +45,19 @@ export default function RevenueAnalyticsPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Revenue Analytics</h1>
-          <p className="text-text-muted">Track platform earnings and financial health.</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Revenue Analytics</h1>
+          <p className="text-slate-500 font-medium">Track platform earnings and financial health.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="glass border-white/10 px-6 py-3 rounded-2xl text-sm font-bold text-white hover:bg-white/10 transition-all flex items-center gap-2">
-            <FileText size={18} />
+          <button className="bg-white border border-slate-200 px-6 py-3 rounded-2xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2">
+            <FileText size={18} className="text-slate-400" />
             Monthly Report
           </button>
-          <button className="bg-primary hover:bg-primary-hover px-6 py-3 rounded-2xl text-sm font-bold text-white shadow-xl shadow-primary/20 transition-all flex items-center gap-2">
+          <button className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-2xl text-sm font-bold text-white shadow-xl shadow-blue-600/20 transition-all flex items-center gap-2">
             <Download size={18} />
             Export CSV
           </button>
@@ -65,32 +66,37 @@ export default function RevenueAnalyticsPage() {
 
       {/* Main Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 glass p-8 rounded-[2.5rem] relative overflow-hidden">
+        <div className="lg:col-span-2 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 p-8">
-             <TrendingUp className="text-primary opacity-20" size={120} />
+             <TrendingUp className="text-blue-600 opacity-5" size={140} />
           </div>
-          <p className="text-sm font-bold text-text-muted uppercase tracking-widest mb-2">Total Platform Revenue</p>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Total Platform Revenue</p>
           <div className="flex items-end gap-4 mb-8">
-            <h2 className="text-6xl font-black text-white tracking-tighter">$1,245,800</h2>
-            <div className="flex items-center gap-1 text-green-400 font-bold mb-2">
+            <h2 className="text-6xl font-black text-slate-900 tracking-tighter">$1,245,800</h2>
+            <div className="flex items-center gap-1 text-green-600 font-bold mb-3">
               <ArrowUpRight size={20} />
-              <span>12.5%</span>
+              <span className="text-sm">12.5%</span>
             </div>
           </div>
 
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} dy={10} />
+                <YAxis stroke="#94a3b8" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
                 <Tooltip 
-                  cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} 
+                  cursor={{fill: '#f8fafc'}}
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                  }} 
                 />
-                <Bar dataKey="total" radius={[6, 6, 0, 0]}>
+                <Bar dataKey="total" radius={[6, 6, 0, 0]} barSize={32}>
                   {revenueData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index === 5 ? '#3b82f6' : 'rgba(59, 130, 246, 0.3)'} />
+                    <Cell key={`cell-${index}`} fill={index === 5 ? '#2563eb' : '#dbeafe'} />
                   ))}
                 </Bar>
               </BarChart>
@@ -99,85 +105,85 @@ export default function RevenueAnalyticsPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="glass p-8 rounded-[2.5rem]">
+          <motion.div whileHover={{ y: -4 }} className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 rounded-2xl bg-green-400/10 text-green-400">
+              <div className="p-3 rounded-2xl bg-green-50 text-green-600 border border-green-100">
                 <Ticket size={24} />
               </div>
               <div>
-                <p className="text-xs font-bold text-text-muted uppercase tracking-widest">Verified Tickets</p>
-                <h3 className="text-3xl font-bold text-white">42,850</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Verified Tickets</p>
+                <h3 className="text-3xl font-bold text-slate-900 tracking-tight">42,850</h3>
               </div>
             </div>
-            <p className="text-sm text-text-muted">Total tickets validated across all events this year.</p>
-          </div>
+            <p className="text-xs text-slate-500 font-medium">Total tickets validated across all events this year.</p>
+          </motion.div>
 
-          <div className="glass p-8 rounded-[2.5rem]">
+          <motion.div whileHover={{ y: -4 }} className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 rounded-2xl bg-purple-400/10 text-purple-400">
+              <div className="p-3 rounded-2xl bg-purple-50 text-purple-600 border border-purple-100">
                 <Briefcase size={24} />
               </div>
               <div>
-                <p className="text-xs font-bold text-text-muted uppercase tracking-widest">Organizer Payouts</p>
-                <h3 className="text-3xl font-bold text-white">$980K</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Organizer Payouts</p>
+                <h3 className="text-3xl font-bold text-slate-900 tracking-tight">$980K</h3>
               </div>
             </div>
-            <p className="text-sm text-text-muted">Total funds disbursed to event organizers.</p>
-          </div>
+            <p className="text-xs text-slate-500 font-medium">Total funds disbursed to event organizers.</p>
+          </motion.div>
         </div>
       </div>
 
       {/* Breakdown Table */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white">Event Revenue Breakdown</h3>
+          <h3 className="text-xl font-bold text-slate-900">Event Revenue Breakdown</h3>
           <div className="relative group w-72">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors" size={16} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={16} />
             <input 
               type="text" 
               placeholder="Search events..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 outline-none focus:border-primary/50 text-sm text-white transition-all"
+              className="w-full bg-slate-100 border-none rounded-xl py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-blue-500/20 text-sm text-slate-900 transition-all"
             />
           </div>
         </div>
 
-        <div className="glass rounded-[2.5rem] overflow-hidden">
+        <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-white/5">
-                <th className="px-8 py-6 text-xs font-bold text-text-muted uppercase tracking-widest">Event Title</th>
-                <th className="px-8 py-6 text-xs font-bold text-text-muted uppercase tracking-widest text-center">Tickets Sold</th>
-                <th className="px-8 py-6 text-xs font-bold text-text-muted uppercase tracking-widest text-center">Status</th>
-                <th className="px-8 py-6 text-xs font-bold text-text-muted uppercase tracking-widest text-right">Total Revenue</th>
+              <tr className="border-b border-slate-100 bg-slate-50/50">
+                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Event Title</th>
+                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Tickets Sold</th>
+                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Status</th>
+                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Total Revenue</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-50">
               {eventRevenue.map((event) => (
-                <tr key={event.id} className="hover:bg-white/5 transition-colors group">
+                <tr key={event.id} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
                         <Calendar size={16} />
                       </div>
-                      <span className="text-sm font-bold text-white group-hover:text-primary transition-colors">{event.title}</span>
+                      <span className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{event.title}</span>
                     </div>
                   </td>
                   <td className="px-8 py-5 text-center">
-                    <span className="text-sm text-white font-medium">{event.tickets.toLocaleString()}</span>
+                    <span className="text-sm text-slate-700 font-bold">{event.tickets.toLocaleString()}</span>
                   </td>
                   <td className="px-8 py-5 text-center">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${
-                      event.status === 'Completed' ? 'text-green-400 bg-green-400/10' :
-                      event.status === 'Ongoing' ? 'text-blue-400 bg-blue-400/10' :
-                      'text-orange-400 bg-orange-400/10'
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${
+                      event.status === 'Completed' ? 'text-green-600 bg-green-50 border border-green-100' :
+                      event.status === 'Ongoing' ? 'text-blue-600 bg-blue-50 border border-blue-100' :
+                      'text-orange-600 bg-orange-50 border border-orange-100'
                     }`}>
                       {event.status}
                     </span>
                   </td>
                   <td className="px-8 py-5 text-right">
-                    <span className="text-sm font-bold text-white">${event.revenue.toLocaleString()}</span>
+                    <span className="text-sm font-black text-slate-900">${event.revenue.toLocaleString()}</span>
                   </td>
                 </tr>
               ))}

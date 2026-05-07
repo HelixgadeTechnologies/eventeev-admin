@@ -49,18 +49,18 @@ const recentActivity = [
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Platform Overview</h1>
-          <p className="text-text-muted">Welcome back, here&apos;s what&apos;s happening today.</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Platform Overview</h1>
+          <p className="text-slate-500 font-medium">Welcome back, here&apos;s what&apos;s happening today.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="glass px-4 py-2 rounded-xl text-sm font-medium text-white hover:bg-white/10 transition-all">
+          <button className="bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
             Download Report
           </button>
-          <button className="bg-gradient-primary px-4 py-2 rounded-xl text-sm font-bold text-white shadow-lg shadow-primary/20 hover:opacity-90 transition-all">
+          <button className="bg-blue-600 px-4 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all">
             + New Admin
           </button>
         </div>
@@ -101,14 +101,14 @@ export default function DashboardPage() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* User Growth */}
-        <div className="lg:col-span-2 glass p-8 rounded-[2.5rem]">
+        <div className="lg:col-span-2 bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className="text-xl font-bold text-white">User Growth</h3>
-              <p className="text-text-muted text-sm">Monthly registration overview</p>
+              <h3 className="text-lg font-bold text-slate-900">User Growth</h3>
+              <p className="text-slate-500 text-sm font-medium">Monthly registration overview</p>
             </div>
-            <div className="flex items-center gap-2 text-primary font-bold text-sm cursor-pointer hover:underline">
-              View details <ArrowUpRight size={16} />
+            <div className="flex items-center gap-2 text-blue-600 font-bold text-xs cursor-pointer hover:underline">
+              View details <ArrowUpRight size={14} />
             </div>
           </div>
           <div className="h-[300px] w-full">
@@ -116,37 +116,40 @@ export default function DashboardPage() {
               <AreaChart data={userGrowthData}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis 
                   dataKey="name" 
                   stroke="#94a3b8" 
-                  fontSize={12} 
+                  fontSize={11} 
+                  fontWeight={600}
                   tickLine={false} 
                   axisLine={false} 
+                  dy={10}
                 />
                 <YAxis 
                   stroke="#94a3b8" 
-                  fontSize={12} 
+                  fontSize={11} 
+                  fontWeight={600}
                   tickLine={false} 
                   axisLine={false}
                   tickFormatter={(value) => `${value}`}
                 />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: '#1e293b', 
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e2e8f0',
                     borderRadius: '12px',
-                    color: '#fff'
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                   }} 
                 />
                 <Area 
                   type="monotone" 
                   dataKey="value" 
-                  stroke="#3b82f6" 
+                  stroke="#2563eb" 
                   strokeWidth={3}
                   fillOpacity={1} 
                   fill="url(#colorValue)" 
@@ -157,10 +160,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Event Distribution */}
-        <div className="glass p-8 rounded-[2.5rem]">
-          <h3 className="text-xl font-bold text-white mb-1">Event Distribution</h3>
-          <p className="text-text-muted text-sm mb-8">By category</p>
-          <div className="h-[250px] w-full">
+        <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900 mb-1">Event Distribution</h3>
+          <p className="text-slate-500 text-sm font-medium mb-8">By category</p>
+          <div className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -169,7 +172,7 @@ export default function DashboardPage() {
                   cy="50%"
                   innerRadius={60}
                   outerRadius={80}
-                  paddingAngle={5}
+                  paddingAngle={8}
                   dataKey="value"
                 >
                   {eventCategoryData.map((entry, index) => (
@@ -178,22 +181,23 @@ export default function DashboardPage() {
                 </Pie>
                 <Tooltip 
                    contentStyle={{ 
-                    backgroundColor: '#1e293b', 
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '12px'
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                   }} 
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="space-y-3 mt-4">
+          <div className="space-y-3 mt-6">
             {eventCategoryData.map((item, idx) => (
               <div key={item.name} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx] }} />
-                  <span className="text-sm text-text-muted">{item.name}</span>
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{item.name}</span>
                 </div>
-                <span className="text-sm font-bold text-white">{item.value}</span>
+                <span className="text-sm font-bold text-slate-900">{item.value}</span>
               </div>
             ))}
           </div>
@@ -201,30 +205,30 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Activity */}
-      <div className="glass p-8 rounded-[2.5rem]">
+      <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-8">
-          <h3 className="text-xl font-bold text-white">Recent Activity</h3>
-          <button className="text-sm text-primary font-bold hover:underline">View All</button>
+          <h3 className="text-lg font-bold text-slate-900">Recent Activity</h3>
+          <button className="text-xs font-bold text-blue-600 hover:underline uppercase tracking-wider">View All</button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {recentActivity.map((activity) => (
             <motion.div 
               key={activity.id}
-              whileHover={{ scale: 1.02 }}
-              className="p-4 rounded-2xl bg-white/5 border border-white/5 flex gap-4"
+              whileHover={{ scale: 1.02, backgroundColor: '#f8fafc' }}
+              className="p-4 rounded-2xl border border-slate-100 flex gap-4 transition-all"
             >
               <div className={`p-3 rounded-xl h-fit ${
-                activity.color === 'blue' ? 'text-blue-400 bg-blue-400/10' :
-                activity.color === 'purple' ? 'text-purple-400 bg-purple-400/10' :
-                activity.color === 'green' ? 'text-green-400 bg-green-400/10' :
-                'text-orange-400 bg-orange-400/10'
+                activity.color === 'blue' ? 'text-blue-600 bg-blue-50' :
+                activity.color === 'purple' ? 'text-purple-600 bg-purple-50' :
+                activity.color === 'green' ? 'text-green-600 bg-green-50' :
+                'text-orange-600 bg-orange-50'
               }`}>
                 <activity.icon size={20} />
               </div>
               <div>
-                <p className="text-sm font-bold text-white line-clamp-1">{activity.title}</p>
-                <p className="text-xs text-text-muted mb-1">{activity.description}</p>
-                <p className="text-[10px] font-bold text-primary/80 uppercase tracking-tight">{activity.time}</p>
+                <p className="text-sm font-bold text-slate-900 line-clamp-1">{activity.title}</p>
+                <p className="text-xs text-slate-500 font-medium mb-1">{activity.description}</p>
+                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">{activity.time}</p>
               </div>
             </motion.div>
           ))}
@@ -233,3 +237,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

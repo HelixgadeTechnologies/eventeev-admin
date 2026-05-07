@@ -71,65 +71,65 @@ export default function UserManagementPage() {
       </div>
 
       {/* Table */}
-      <div className="glass rounded-[2.5rem] overflow-hidden">
+      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-white/5">
-                <th className="px-8 py-6 text-xs font-bold text-text-muted uppercase tracking-widest">User</th>
-                <th className="px-8 py-6 text-xs font-bold text-text-muted uppercase tracking-widest">Role</th>
-                <th className="px-8 py-6 text-xs font-bold text-text-muted uppercase tracking-widest">Joined Date</th>
-                <th className="px-8 py-6 text-xs font-bold text-text-muted uppercase tracking-widest">Status</th>
-                <th className="px-8 py-6 text-xs font-bold text-text-muted uppercase tracking-widest text-right">Actions</th>
+              <tr className="border-b border-slate-100 bg-slate-50/50">
+                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">User</th>
+                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Role</th>
+                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Joined Date</th>
+                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-50">
               {users.map((user) => (
                 <motion.tr 
                   key={user.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="hover:bg-white/5 transition-colors group"
+                  className="hover:bg-slate-50/50 transition-colors group"
                 >
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-primary/20 flex items-center justify-center text-primary font-bold text-sm border border-primary/20">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm border border-blue-100">
                         {user.avatar}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-white group-hover:text-primary transition-colors">{user.name}</p>
-                        <p className="text-xs text-text-muted">{user.email}</p>
+                        <p className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{user.name}</p>
+                        <p className="text-xs text-slate-500 font-medium">{user.email}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-8 py-5">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${
-                      user.role === 'Admin' ? 'text-purple-400 bg-purple-400/10 border border-purple-400/20' : 'text-blue-400 bg-blue-400/10 border border-blue-400/20'
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${
+                      user.role === 'Admin' ? 'text-purple-600 bg-purple-50 border border-purple-100' : 'text-blue-600 bg-blue-50 border border-blue-100'
                     }`}>
                       {user.role}
                     </span>
                   </td>
                   <td className="px-8 py-5">
-                    <span className="text-sm text-text-muted">{user.joined}</span>
+                    <span className="text-sm text-slate-500 font-medium">{user.joined}</span>
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-2">
-                      <div className={`w-1.5 h-1.5 rounded-full ${
-                        user.status === 'Active' ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 
-                        user.status === 'Blocked' ? 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]' : 'bg-gray-400'
+                      <div className={`w-2 h-2 rounded-full ${
+                        user.status === 'Active' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]' : 
+                        user.status === 'Blocked' ? 'bg-red-500' : 'bg-slate-300'
                       }`} />
-                      <span className="text-sm font-medium text-white">{user.status}</span>
+                      <span className="text-sm font-semibold text-slate-700">{user.status}</span>
                     </div>
                   </td>
                   <td className="px-8 py-5 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-2 rounded-lg hover:bg-white/10 text-text-muted hover:text-primary transition-all" title="Promote/Demote">
+                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="p-2 rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-blue-600 transition-all border border-transparent hover:border-slate-100">
                         <ShieldCheck size={18} />
                       </button>
-                      <button className="p-2 rounded-lg hover:bg-white/10 text-text-muted hover:text-red-400 transition-all" title="Block/Unblock">
+                      <button className="p-2 rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-red-600 transition-all border border-transparent hover:border-slate-100">
                         <Ban size={18} />
                       </button>
-                      <button className="p-2 rounded-lg hover:bg-white/10 text-text-muted hover:text-white transition-all">
+                      <button className="p-2 rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-900 transition-all border border-transparent hover:border-slate-100">
                         <MoreVertical size={18} />
                       </button>
                     </div>
