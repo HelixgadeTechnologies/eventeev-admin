@@ -44,8 +44,8 @@ export default function UserManagementPage() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const data = await api.get<User[]>('/admin/users');
-      setUsers(data);
+      const data = await api.get<{ users: User[] }>('/admin/users');
+      setUsers(data.users || []);
     } catch (err: any) {
       console.error("Fetch Users Error:", err);
       setError(err.message || "Failed to load users.");

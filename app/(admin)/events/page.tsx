@@ -47,8 +47,8 @@ export default function EventManagementPage() {
   const fetchEvents = async () => {
     try {
       setIsLoading(true);
-      const data = await api.get<Event[]>('/admin/events');
-      setEvents(data);
+      const data = await api.get<{ events: Event[] }>('/admin/events');
+      setEvents(data.events || []);
     } catch (err: any) {
       console.error("Fetch Events Error:", err);
       setError(err.message || "Failed to load events.");
@@ -79,7 +79,7 @@ export default function EventManagementPage() {
     }
   };
 
-  const filteredEvents = events.filter(event => {
+  const filteredEvents = (events || []).filter(event => {
     const title = event.title || "";
     const owner = event.organizer_name || event.owner || "";
     const location = event.location || "";

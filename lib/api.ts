@@ -19,7 +19,7 @@ export const api = {
     if (auth) {
       const token = localStorage.getItem('eventeev_admin_token');
       if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
+        headers.set('x-auth-token', token);
       }
     }
 

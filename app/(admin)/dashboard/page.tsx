@@ -39,12 +39,20 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-interface Stats {
-  totalUsers: number;
-  totalAdmins: number;
-  totalEvents: number;
-  totalAttendees: number;
-  potentialRevenue: number;
+interface StatsResponse {
+  users: {
+    total: number;
+    admins: number;
+  };
+  events: {
+    total: number;
+  };
+  attendees: {
+    total: number;
+  };
+  revenue: {
+    potential: number;
+  };
 }
 
 const userGrowthData = [
@@ -61,7 +69,7 @@ const COLORS = ['#f97316', '#fb923c', '#fdba74', '#fed7aa'];
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<StatsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,7 +77,7 @@ export default function DashboardPage() {
     const fetchStats = async () => {
       try {
         setIsLoading(true);
-        const data = await api.get<Stats>('/admin/stats');
+        const data = await api.get<StatsResponse>('/admin/stats');
         setStats(data);
       } catch (err: any) {
         console.error("Fetch Stats Error:", err);
@@ -103,14 +111,14 @@ export default function DashboardPage() {
           <p className="text-lg font-bold text-slate-900 mb-4">Total Users</p>
           <div className="flex items-center gap-4 mb-2">
             <h2 className="text-6xl font-black text-slate-900 tracking-tighter">
-              {stats?.totalUsers?.toLocaleString() || '0'}
+              {stats?.users?.total?.toLocaleString() || '0'}
             </h2>
             <div className="flex items-center text-green-500 font-bold text-lg">
               <ArrowUp size={24} />
               <span>12%</span>
             </div>
           </div>
-          <p className="text-sm text-slate-400 font-medium mb-12">Growth includes {stats?.totalAdmins || 0} platform admins</p>
+          <p className="text-sm text-slate-400 font-medium mb-12">Growth includes {stats?.users?.admins || 0} platform admins</p>
           <a href="/users" className="text-sm font-bold text-orange-600 hover:underline flex items-center gap-2">
             View all users <ArrowUpRight size={14} />
           </a>
@@ -121,7 +129,7 @@ export default function DashboardPage() {
           <p className="text-lg font-bold text-slate-900 mb-4">Active Events</p>
           <div className="flex items-center gap-4 mb-2">
             <h2 className="text-6xl font-black text-slate-900 tracking-tighter">
-              {stats?.totalEvents?.toLocaleString() || '0'}
+              {stats?.events?.total?.toLocaleString() || '0'}
             </h2>
             <div className="flex items-center text-green-500 font-bold text-lg">
               <ArrowUp size={24} />
@@ -139,7 +147,7 @@ export default function DashboardPage() {
           <p className="text-lg font-bold text-slate-900 mb-4">Total Attendees</p>
           <div className="flex items-center gap-4 mb-2">
             <h2 className="text-6xl font-black text-slate-900 tracking-tighter">
-              {stats?.totalAttendees ? (stats.totalAttendees / 1000).toFixed(1) + 'K' : '0'}
+              {stats?.attendees?.total ? (stats.attendees.total / 1000).toFixed(1) + 'K' : '0'}
             </h2>
             <div className="flex items-center text-green-500 font-bold text-lg">
               <ArrowUp size={24} />
@@ -192,7 +200,7 @@ export default function DashboardPage() {
           <div>
             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Potential Revenue</p>
             <h2 className="text-5xl font-black text-slate-900 tracking-tighter mb-4">
-              ${stats?.potentialRevenue ? (stats.potentialRevenue / 1000000).toFixed(1) + 'M' : '0.0'}
+              ${stats?.revenue?.potential ? (stats.revenue.potential / 1000000).toFixed(1) + 'M' : '0.0'}
             </h2>
             <div className="flex items-center gap-2 text-green-500 font-bold text-sm">
               <ArrowUpRight size={18} />
@@ -221,7 +229,7 @@ export default function DashboardPage() {
           </div>
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Platform Admins</p>
-            <h3 className="text-2xl font-bold text-slate-900">{stats?.totalAdmins || 0}</h3>
+            <h3 className="text-2xl font-bold text-slate-900">{stats?.users?.admins || 0}</h3>
           </div>
         </div>
 

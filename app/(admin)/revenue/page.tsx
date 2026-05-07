@@ -28,10 +28,9 @@ import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
-interface RevenueData {
-  totalRevenue: number;
-  totalTickets: number;
-  payouts?: number;
+interface RevenueResponse {
+  totalAmount: number;
+  verifiedTickets: number;
 }
 
 interface Event {
@@ -53,7 +52,7 @@ const chartData = [
 
 export default function RevenueAnalyticsPage() {
   const router = useRouter();
-  const [revenue, setRevenue] = useState<RevenueData | null>(null);
+  const [revenue, setRevenue] = useState<RevenueResponse | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,18 +63,12 @@ export default function RevenueAnalyticsPage() {
       try {
         setIsLoading(true);
         const [revenueRes, eventsRes] = await Promise.all([
-          api.get<RevenueData | number>('/admin/revenue'),
-          api.get<Event[]>('/events')
+          api.get<RevenueResponse>('/admin/revenue'),
+          api.get<{ events: Event[] }>('/admin/events')
         ]);
         
-        // Handle both object and primitive number responses for revenue
-        if (typeof revenueRes === 'number') {
-          setRevenue({ totalRevenue: revenueRes, totalTickets: 0 });
-        } else {
-          setRevenue(revenueRes);
-        }
-        
-        setEvents(eventsRes);
+        setRevenue(revenueRes);
+        setEvents(eventsRes.events || []);
       } catch (err: any) {
         console.error("Fetch Revenue Error:", err);
         setError(err.message || "Failed to load financial data.");
@@ -90,7 +83,7 @@ export default function RevenueAnalyticsPage() {
     fetchData();
   }, [router]);
 
-  const filteredEvents = events.filter(event => 
+  const filteredEvents = (events || []).filter(event => 
     event.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -141,7 +134,7 @@ export default function RevenueAnalyticsPage() {
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Total Platform Revenue</p>
           <div className="flex items-end gap-4 mb-8">
             <h2 className="text-6xl font-black text-slate-900 tracking-tighter">
-              ${revenue?.totalRevenue?.toLocaleString() || '0'}
+              ${revenue?.totalAmount?.toLocaleString() || '0'}
             </h2>
             <div className="flex items-center gap-1 text-green-600 font-bold mb-3">
               <ArrowUpRight size={20} />
@@ -183,7 +176,7 @@ export default function RevenueAnalyticsPage() {
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Verified Tickets</p>
                 <h3 className="text-3xl font-bold text-slate-900 tracking-tight">
-                  {revenue?.totalTickets?.toLocaleString() || '0'}
+                  {revenue?.verifiedTickets?.toLocaleString() || '0'}
                 </h3>
               </div>
             </div>
@@ -198,7 +191,7 @@ export default function RevenueAnalyticsPage() {
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Organizer Payouts</p>
                 <h3 className="text-3xl font-bold text-slate-900 tracking-tight">
-                  ${revenue?.payouts ? (revenue.payouts / 1000).toFixed(0) + 'K' : '980K'}
+                  $980K
                 </h3>
               </div>
             </div>
