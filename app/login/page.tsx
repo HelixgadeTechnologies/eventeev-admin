@@ -23,7 +23,7 @@ export default function LoginPage() {
     setError(null);
     
     try {
-      const response = await api.post<{ token: string }>('/auth/login', {
+      const response = await api.post<{ token: string }>('/admin/login', {
         email,
         password
       }, { auth: false });
