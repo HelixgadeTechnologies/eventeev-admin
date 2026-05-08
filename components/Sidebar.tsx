@@ -11,7 +11,8 @@ import {
   Settings,
   LogOut,
   Search,
-  ChevronDown
+  ChevronDown,
+  Gamepad2
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -27,6 +28,7 @@ const navItems = [
   { icon: Calendar, label: 'Events', href: '/events' },
   { icon: Clock, label: 'Waitlist', href: '/waitlist' },
   { icon: BarChart3, label: 'Revenue', href: '/revenue' },
+  { icon: Gamepad2, label: 'Games', href: '/games' },
 ];
 
 export default function Sidebar() {
