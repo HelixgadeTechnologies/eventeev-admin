@@ -19,12 +19,17 @@ import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 interface User {
-  id: number | string;
-  name: string;
+  id?: number | string;
+  _id?: number | string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
   email: string;
   role: string;
   joined_at?: string;
-  status: string;
+  createdAt?: string;
+  status?: string;
+  isBlocked?: boolean;
 }
 
 export default function UserManagementPage() {
@@ -39,7 +44,7 @@ export default function UserManagementPage() {
   
   // Modal State
   const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
-  const [newAdmin, setNewAdmin] = useState({ name: '', email: '', password: '' });
+  const [newAdmin, setNewAdmin] = useState({ firstName: '', lastName: '', email: '', password: '' });
 
   const fetchUsers = async () => {
     try {
@@ -61,8 +66,10 @@ export default function UserManagementPage() {
     fetchUsers();
   }, [router]);
 
-  const handleStatusUpdate = async (id: string | number, currentStatus: string) => {
-    const newStatus = (currentStatus.toLowerCase() === 'active' || currentStatus.toLowerCase() === 'active') ? 'blocked' : 'active';
+  const handleStatusUpdate = async (id: string | number, currentStatus: string | undefined) => {
+    const isCurrentlyActive = currentStatus?.toLowerCase() === 'active' || currentStatus === undefined;
+    const newStatus = isCurrentlyActive ? 'blocked' : 'active';
+    
     try {
       setActionLoading(`status-${id}`);
       await api.request(`/admin/users/${id}/status`, {
@@ -102,7 +109,7 @@ export default function UserManagementPage() {
       await api.post('/admin/create', newAdmin);
       setSuccess("New admin account created successfully.");
       setIsAddAdminOpen(false);
-      setNewAdmin({ name: '', email: '', password: '' });
+      setNewAdmin({ firstName: '', lastName: '', email: '', password: '' });
       fetchUsers();
     } catch (err: any) {
       setError(err.message || "Failed to create admin account.");
@@ -111,8 +118,9 @@ export default function UserManagementPage() {
     }
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredUsers = (users || []).filter(user => {
+    const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name || "";
+    const matchesSearch = fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = selectedRole === 'All Roles' || user.role.toLowerCase() === selectedRole.toLowerCase();
     return matchesSearch && matchesRole;
@@ -209,7 +217,7 @@ export default function UserManagementPage() {
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
                     <motion.tr 
-                      key={user.id}
+                      key={user.id || user._id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="hover:bg-orange-50/20 transition-colors group"
@@ -217,10 +225,12 @@ export default function UserManagementPage() {
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-primary font-bold text-sm border border-orange-100/50">
-                            {user.name.charAt(0)}
+                            {(user.firstName || user.name || "U").charAt(0)}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{user.name}</p>
+                            <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">
+                              {user.firstName ? `${user.firstName} ${user.lastName || ''}` : (user.name || 'Unknown')}
+                            </p>
                             <p className="text-xs text-slate-400 font-medium">{user.email}</p>
                           </div>
                         </div>
@@ -234,39 +244,41 @@ export default function UserManagementPage() {
                       </td>
                       <td className="px-8 py-5 text-center">
                         <span className="text-sm text-slate-500 font-medium">
-                          {user.joined_at ? new Date(user.joined_at).toLocaleDateString() : 'N/A'}
+                          {user.createdAt || user.joined_at ? new Date(user.createdAt || user.joined_at!).toLocaleDateString() : 'N/A'}
                         </span>
                       </td>
                       <td className="px-8 py-5 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <div className={`w-2 h-2 rounded-full ${
-                            user.status.toLowerCase() === 'active' ? 'bg-green-500' : 
-                            user.status.toLowerCase() === 'blocked' ? 'bg-red-500' : 'bg-slate-300'
+                            (user.status?.toLowerCase() === 'active' || user.isBlocked === false) ? 'bg-green-500' : 
+                            (user.status?.toLowerCase() === 'blocked' || user.isBlocked === true) ? 'bg-red-500' : 'bg-green-500'
                           }`} />
-                          <span className="text-sm font-bold text-slate-700 capitalize">{user.status}</span>
+                          <span className="text-sm font-bold text-slate-700 capitalize">
+                            {user.status || (user.isBlocked ? 'Blocked' : 'Active')}
+                          </span>
                         </div>
                       </td>
                       <td className="px-8 py-5 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button 
                             disabled={!!actionLoading}
-                            onClick={() => handleRoleUpdate(user.id, user.role)}
+                            onClick={() => handleRoleUpdate(user.id || user._id!, user.role)}
                             title={user.role.toLowerCase() === 'admin' ? "Demote to User" : "Promote to Admin"}
                             className="p-2.5 rounded-xl bg-slate-50 text-slate-400 hover:text-orange-600 hover:bg-orange-50 transition-all border border-slate-100 hover:border-orange-100"
                           >
-                            {actionLoading === `role-${user.id}` ? <Loader2 className="animate-spin" size={18} /> : <ShieldCheck size={18} />}
+                            {actionLoading === `role-${user.id || user._id}` ? <Loader2 className="animate-spin" size={18} /> : <ShieldCheck size={18} />}
                           </button>
                           <button 
                             disabled={!!actionLoading}
-                            onClick={() => handleStatusUpdate(user.id, user.status)}
-                            title={user.status.toLowerCase() === 'active' ? "Block User" : "Activate User"}
+                            onClick={() => handleStatusUpdate(user.id || user._id!, user.status)}
+                            title={(user.status?.toLowerCase() === 'active' || !user.isBlocked) ? "Block User" : "Activate User"}
                             className={`p-2.5 rounded-xl transition-all border ${
-                              user.status.toLowerCase() === 'active' 
+                              (user.status?.toLowerCase() === 'active' || !user.isBlocked) 
                                 ? 'bg-slate-50 text-slate-400 hover:text-red-600 hover:bg-red-50 border-slate-100 hover:border-red-100' 
                                 : 'bg-green-50 text-green-600 border-green-100 hover:bg-green-100'
                             }`}
                           >
-                            {actionLoading === `status-${user.id}` ? <Loader2 className="animate-spin" size={18} /> : <Ban size={18} />}
+                            {actionLoading === `status-${user.id || user._id}` ? <Loader2 className="animate-spin" size={18} /> : <Ban size={18} />}
                           </button>
                           <button className="p-2.5 rounded-xl bg-slate-50 text-slate-400 hover:text-slate-900 transition-all border border-slate-100">
                             <MoreVertical size={18} />
@@ -316,16 +328,29 @@ export default function UserManagementPage() {
               </div>
 
               <form onSubmit={handleCreateAdmin} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
-                  <input 
-                    required
-                    type="text" 
-                    value={newAdmin.name}
-                    onChange={(e) => setNewAdmin({...newAdmin, name: e.target.value})}
-                    placeholder="Enter admin name..."
-                    className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 text-sm text-slate-900 focus:ring-2 focus:ring-orange-500/20 transition-all"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">First Name</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={newAdmin.firstName}
+                      onChange={(e) => setNewAdmin({...newAdmin, firstName: e.target.value})}
+                      placeholder="John"
+                      className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 text-sm text-slate-900 focus:ring-2 focus:ring-orange-500/20 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Last Name</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={newAdmin.lastName}
+                      onChange={(e) => setNewAdmin({...newAdmin, lastName: e.target.value})}
+                      placeholder="Doe"
+                      className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 text-sm text-slate-900 focus:ring-2 focus:ring-orange-500/20 transition-all"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email Address</label>

@@ -34,7 +34,8 @@ interface RevenueResponse {
 }
 
 interface Event {
-  id: number | string;
+  id?: number | string;
+  _id?: number | string;
   title: string;
   status?: string;
   tickets_sold?: number;
@@ -228,7 +229,7 @@ export default function RevenueAnalyticsPage() {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {filteredEvents.map((event) => (
-                <tr key={event.id} className="hover:bg-orange-50/20 transition-colors group">
+                <tr key={event.id || event._id} className="hover:bg-orange-50/20 transition-colors group">
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-primary border border-orange-100">
@@ -251,7 +252,7 @@ export default function RevenueAnalyticsPage() {
                   </td>
                   <td className="px-8 py-5 text-right">
                     <button 
-                      onClick={() => router.push(`/revenue/event/${event.id}`)}
+                      onClick={() => router.push(`/revenue/event/${event.id || event._id}`)}
                       className="inline-flex items-center gap-2 bg-slate-50 hover:bg-orange-50 text-slate-600 hover:text-primary px-4 py-2 rounded-xl text-xs font-bold transition-all border border-slate-100 hover:border-orange-100"
                     >
                       <Eye size={14} />

@@ -18,12 +18,17 @@ import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 interface WaitlistEntry {
-  id: number | string;
-  name: string;
+  id?: number | string;
+  _id?: number | string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
   email: string;
   created_at?: string;
+  createdAt?: string;
   signUpDate?: string;
-  type: string;
+  type?: string;
+  role?: string;
   status?: string;
 }
 
@@ -40,7 +45,7 @@ export default function WaitlistManagementPage() {
     try {
       setIsLoading(true);
       const data = await api.get<WaitlistEntry[]>('/admin/waitlist');
-      setWaitlist(data);
+      setWaitlist(Array.isArray(data) ? data : []);
     } catch (err: any) {
       console.error("Fetch Waitlist Error:", err);
       setError(err.message || "Failed to load waitlist.");
@@ -69,9 +74,12 @@ export default function WaitlistManagementPage() {
     }
   };
 
-  const filteredWaitlist = waitlist.filter(entry => {
-    return entry.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           entry.email.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredWaitlist = (waitlist || []).filter(entry => {
+    const fullName = `${entry.firstName || ''} ${entry.lastName || ''}`.trim() || entry.name || "";
+    const email = entry.email || "";
+    
+    return fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+           email.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   return (
@@ -134,13 +142,13 @@ export default function WaitlistManagementPage() {
 
       {/* Search & Filters */}
       <div className="relative group">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-orange-600 transition-colors" size={18} />
         <input 
           type="text" 
           placeholder="Search waitlist by name or email..." 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all text-sm text-slate-900 shadow-sm"
+          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500/50 transition-all text-sm text-slate-900 shadow-sm"
         />
       </div>
 
@@ -166,7 +174,7 @@ export default function WaitlistManagementPage() {
                 {filteredWaitlist.length > 0 ? (
                   filteredWaitlist.map((item) => (
                     <motion.tr 
-                      key={item.id}
+                      key={item.id || item._id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="hover:bg-slate-50/50 transition-colors group"
@@ -174,10 +182,12 @@ export default function WaitlistManagementPage() {
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-primary font-bold text-sm border border-orange-100">
-                            {item.name.charAt(0)}
+                            {(item.firstName || item.name || "U").charAt(0)}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{item.name}</p>
+                            <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">
+                              {item.firstName ? `${item.firstName} ${item.lastName || ''}` : (item.name || 'Unknown')}
+                            </p>
                             <p className="text-xs text-slate-500 font-medium">{item.email}</p>
                           </div>
                         </div>
@@ -185,24 +195,24 @@ export default function WaitlistManagementPage() {
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
                           <Calendar size={14} className="text-primary" />
-                          {item.created_at ? new Date(item.created_at).toLocaleDateString() : (item.signUpDate || 'N/A')}
+                          {item.createdAt || item.created_at || item.signUpDate ? new Date(item.createdAt || item.created_at || item.signUpDate!).toLocaleDateString() : 'N/A'}
                         </div>
                       </td>
                       <td className="px-8 py-5 text-center">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${
-                          item.type === 'Organizer' ? 'text-purple-600 bg-purple-50 border border-purple-100' : 'text-blue-600 bg-blue-50 border border-blue-100'
+                          item.role?.toLowerCase() === 'admin' ? 'text-purple-600 bg-purple-50 border border-purple-100' : 'text-blue-600 bg-blue-50 border border-blue-100'
                         }`}>
-                          {item.type}
+                          {item.type || item.role || 'User'}
                         </span>
                       </td>
                       <td className="px-8 py-5 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button 
-                            disabled={actionLoading === `approve-${item.id}`}
-                            onClick={() => handleApproveUser(item.id)}
+                            disabled={actionLoading === `approve-${item.id || item._id}`}
+                            onClick={() => handleApproveUser(item.id || item._id!)}
                             className="bg-blue-600 text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-sm shadow-blue-600/10 flex items-center gap-2"
                           >
-                            {actionLoading === `approve-${item.id}` ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />}
+                            {actionLoading === `approve-${item.id || item._id}` ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />}
                             Approve
                           </button>
                           <button className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all">

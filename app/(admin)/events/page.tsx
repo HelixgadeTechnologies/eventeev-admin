@@ -21,10 +21,16 @@ import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 interface Event {
-  id: number | string;
+  id?: number | string;
+  _id?: number | string;
   title: string;
   organizer_name?: string;
-  owner?: string;
+  owner?: string | {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
   start_date?: string;
   date?: string;
   location?: string;
@@ -81,15 +87,20 @@ export default function EventManagementPage() {
 
   const filteredEvents = (events || []).filter(event => {
     const title = event.title || "";
-    const owner = event.organizer_name || event.owner || "";
+    let ownerName = "";
+    if (typeof event.owner === 'object' && event.owner !== null) {
+      ownerName = `${event.owner.firstName || ''} ${event.owner.lastName || ''}`.trim();
+    } else {
+      ownerName = (event.organizer_name || event.owner || "").toString();
+    }
     const location = event.location || "";
     
     return title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
            location.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  const getGradient = (id: number | string) => {
+  const getGradient = (id: number | string | undefined) => {
     const gradients = [
       'from-blue-500 to-indigo-600',
       'from-purple-500 to-pink-600',
@@ -98,6 +109,7 @@ export default function EventManagementPage() {
       'from-rose-400 to-red-600',
       'from-amber-400 to-orange-500'
     ];
+    if (id === undefined || id === null) return `bg-gradient-to-br ${gradients[0]}`;
     const index = typeof id === 'number' ? id % gradients.length : id.toString().length % gradients.length;
     return `bg-gradient-to-br ${gradients[index]}`;
   };
@@ -169,13 +181,13 @@ export default function EventManagementPage() {
           {filteredEvents.length > 0 ? (
             filteredEvents.map((event) => (
               <motion.div 
-                key={event.id}
+                key={event.id || event._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ y: -8 }}
                 className={`bg-white rounded-[2rem] overflow-hidden group border border-slate-100 hover:border-orange-500/30 transition-all duration-300 shadow-sm hover:shadow-xl ${viewMode === 'list' ? 'flex flex-row items-center gap-6 p-4' : ''}`}
               >
-                <div className={`${viewMode === 'grid' ? 'h-48 w-full' : 'h-32 w-48 shrink-0'} ${event.image_url ? '' : getGradient(event.id)} relative overflow-hidden`}>
+                <div className={`${viewMode === 'grid' ? 'h-48 w-full' : 'h-32 w-48 shrink-0'} ${event.image_url ? '' : getGradient(event.id || event._id)} relative overflow-hidden`}>
                   {event.image_url ? (
                     <img src={event.image_url} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
@@ -195,7 +207,14 @@ export default function EventManagementPage() {
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-slate-500 mb-4 font-medium">By <span className="text-slate-900 font-bold">{event.organizer_name || event.owner || 'Unknown'}</span></p>
+                  <p className="text-sm text-slate-500 mb-4 font-medium">
+                    By <span className="text-slate-900 font-bold">
+                      {event.organizer_name || 
+                        (typeof event.owner === 'object' && event.owner !== null 
+                          ? `${event.owner.firstName} ${event.owner.lastName}` 
+                          : (event.owner || 'Unknown'))}
+                    </span>
+                  </p>
 
                   <div className="flex flex-wrap gap-4 mb-6">
                     <div className="flex items-center gap-2 text-xs text-slate-500 font-bold">
@@ -226,15 +245,18 @@ export default function EventManagementPage() {
                   </div>
 
                   <div className={`mt-6 flex items-center gap-3 ${viewMode === 'list' ? 'justify-end' : ''}`}>
-                    <button className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 rounded-xl transition-all text-xs border border-slate-100">
+                    <button 
+                      onClick={() => router.push(`/events/${event.id || event._id}`)}
+                      className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 rounded-xl transition-all text-xs border border-slate-100"
+                    >
                       Details
                     </button>
                     <button 
-                      onClick={() => handleDeleteEvent(event.id)}
-                      disabled={actionLoading === `delete-${event.id}`}
+                      onClick={() => handleDeleteEvent(event.id || event._id!)}
+                      disabled={actionLoading === `delete-${event.id || event._id}`}
                       className="p-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all border border-red-100"
                     >
-                      {actionLoading === `delete-${event.id}` ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+                      {actionLoading === `delete-${event.id || event._id}` ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                     </button>
                   </div>
                 </div>
