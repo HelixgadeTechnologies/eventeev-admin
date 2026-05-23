@@ -252,7 +252,7 @@ export default function RevenueAnalyticsPage() {
                   </td>
                   <td className="px-8 py-5 text-right">
                     <button 
-                      onClick={() => router.push(`/revenue/event/${event.id || event._id}`)}
+                      onClick={() => router.push(`/events/${event.id || event._id}`)}
                       className="inline-flex items-center gap-2 bg-slate-50 hover:bg-orange-50 text-slate-600 hover:text-primary px-4 py-2 rounded-xl text-xs font-bold transition-all border border-slate-100 hover:border-orange-100"
                     >
                       <Eye size={14} />

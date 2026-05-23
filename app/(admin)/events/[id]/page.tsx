@@ -329,14 +329,14 @@ export default function EventDetailsPage() {
                 <span className="text-xs font-bold text-slate-500">Check-in Progress</span>
                 <span className="text-xs font-black text-primary">
                   {attendees.length > 0 
-                    ? Math.round((attendees.filter(a =\u003e a.isCheckedIn).length / attendees.length) * 100) 
+                    ? Math.round((attendees.filter(a => a.isCheckedIn).length / attendees.length) * 100) 
                     : 0}%
                 </span>
               </div>
               <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-primary transition-all duration-1000" 
-                  style={{ width: `${attendees.length > 0 ? (attendees.filter(a =\u003e a.isCheckedIn).length / attendees.length) * 100 : 0}%` }}
+                  style={{ width: `${attendees.length > 0 ? (attendees.filter(a => a.isCheckedIn).length / attendees.length) * 100 : 0}%` }}
                 />
               </div>
             </div>
