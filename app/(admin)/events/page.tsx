@@ -170,7 +170,7 @@ export default function EventManagementPageRedesigned() {
   };
 
   // Extract Categories dynamically for the dropdown filter
-  const categories = ['All Category', ...Array.from(new Set((events || []).map(e => e.category).filter(Boolean)))];
+  const categories = ['All Category', ...Array.from(new Set((events || []).map(e => e.category).filter((c): c is string => !!c)))];
 
   // Filtering Logic
   const filteredEvents = (events || []).filter(event => {
@@ -326,7 +326,7 @@ export default function EventManagementPageRedesigned() {
               className="appearance-none bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-4 pr-10 outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/40 text-xs font-bold text-slate-700 cursor-pointer transition-all shadow-sm"
             >
               {categories.map((cat, idx) => (
-                <option key={idx} value={cat}>{cat === 'All Category' ? 'All Category' : cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                <option key={idx} value={cat}>{cat ? (cat === 'All Category' ? 'All Category' : cat.charAt(0).toUpperCase() + cat.slice(1)) : ''}</option>
               ))}
             </select>
             <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
@@ -383,7 +383,7 @@ export default function EventManagementPageRedesigned() {
                   key={event.id || event._id}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  whileHover={{ y: -4, shadow: '0 20px 25px -5px rgba(0, 0, 0, 0.05)' }}
+                  whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.05)' }}
                   className={`bg-white overflow-hidden group border border-slate-100 hover:border-primary/20 transition-all duration-300 shadow-sm ${
                     viewMode === 'list' 
                       ? 'flex flex-col lg:flex-row items-center justify-between p-5 rounded-[2rem] gap-6 w-full' 
