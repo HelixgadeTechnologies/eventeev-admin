@@ -1,17 +1,25 @@
 'use client';
 
-export default function Logo({ className = "", light = false }: { className?: string, light?: boolean }) {
-  const textColor = light ? 'text-white' : 'text-black';
+export default function Logo({ 
+  className = "", 
+  light = false,
+  showBadge = true 
+}: { 
+  className?: string; 
+  light?: boolean;
+  showBadge?: boolean;
+}) {
+  const textColor = light ? 'text-white' : 'text-slate-900';
   
   return (
-    <div className={`flex items-center select-none ${className}`}>
+    <div className={`flex items-center gap-3 select-none ${className}`}>
       <div className="flex items-baseline">
-        <span className={`text-3xl font-black tracking-tight ${textColor}`}>E</span>
+        <span className={`text-2xl font-black tracking-tight ${textColor}`}>E</span>
         <span className="relative inline-flex items-center justify-center mx-[-1px]">
           {/* Stylized Orange V */}
           <svg 
-            width="28" 
-            height="28" 
+            width="24" 
+            height="24" 
             viewBox="0 0 40 40" 
             fill="none" 
             xmlns="http://www.w3.org/2000/svg"
@@ -26,10 +34,16 @@ export default function Logo({ className = "", light = false }: { className?: st
             />
           </svg>
         </span>
-        <span className={`text-3xl font-black tracking-tight ${textColor} ml-[-2px]`}>
+        <span className={`text-2xl font-black tracking-tight ${textColor} ml-[-2px]`}>
           enteev
         </span>
       </div>
+
+      {showBadge && (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-orange-100/80 text-orange-700 border border-orange-200/60 shadow-xs">
+          Admin
+        </span>
+      )}
     </div>
   );
 }

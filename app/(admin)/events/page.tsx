@@ -6,52 +6,45 @@ import {
   LayoutGrid, 
   List, 
   Trash2, 
-  ExternalLink, 
-  DollarSign,
-  Users as UsersIcon,
   Calendar as CalendarIcon,
   MapPin,
   Loader2,
   AlertCircle,
   CheckCircle2,
   X,
-  Settings,
-  Bell,
   ChevronDown,
-  SlidersHorizontal,
-  Ticket as TicketIcon
+  Eye
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 interface Event {
-  id?: number | string;
-  _id?: number | string;
+  _id?: string;
+  id?: string;
   title: string;
   description: string;
-  organizer_name?: string;
-  owner?: string | {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
+  category?: string;
+  type?: string;
   startDate?: string;
-  start_date?: string;
-  date?: string;
+  endDate?: string;
   startTime?: string;
   endTime?: string;
   location?: string;
-  category?: string;
-  tickets_sold?: number;
-  total_revenue?: number;
-  revenue?: string | number;
+  thumbnailImage?: string;
   image_url?: string;
   status?: string;
+  tickets_sold?: number;
+  total_revenue?: number;
+  owner?: {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  } | string;
 }
 
-export default function EventManagementPageRedesigned() {
+export default function EventManagementPage() {
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,510 +52,450 @@ export default function EventManagementPageRedesigned() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   
-  // Custom interactive states matching the mockup UI
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-  const [selectedTab, setSelectedTab] = useState<'Active' | 'Draft' | 'Past'>('Active');
+  // Interactive filters
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedTab, setSelectedTab] = useState<'All' | 'Active' | 'Completed' | 'Draft'>('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All Category');
-  const [selectedTime, setSelectedTime] = useState('This Month');
-  const [eventsPerPage, setEventsPerPage] = useState(6);
+  const [selectedCategory, setSelectedCategory] = useState('All Categories');
+  const [eventsPerPage] = useState(6);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchEvents = async () => {
-    try {
-      setIsLoading(true);
-      const data = await api.get<{ events: Event[] }>('/admin/events');
-      setEvents(data.events || []);
-    } catch (err: any) {
-      console.error("Fetch Events Error:", err);
-      setError(err.message || "Failed to load events.");
-      if (err.message.includes('401')) {
-        router.push('/login');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchEvents();
-  }, [router]);
+    let ignore = false;
+    const fetchEvents = async () => {
+      try {
+        const data = await api.get<{ events: Event[] }>('/admin/events');
+        if (!ignore) {
+          setEvents(data.events || []);
+        }
+      } catch (err: unknown) {
+        console.error("Fetch Events Error:", err);
+        if (!ignore) {
+          const message = err instanceof Error ? err.message : "Failed to load events.";
+          setError(message);
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    };
 
-  const handleDeleteEvent = async (id: string | number) => {
-    if (!confirm("Are you sure you want to force delete this event? This action cannot be undone.")) return;
+    fetchEvents();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const handleDeleteEvent = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this event? This action will remove all ticket associations.")) return;
     
     try {
-      setActionLoading(`delete-${id}`);
+      setActionLoading(id);
       await api.delete(`/admin/events/${id}`);
-      setSuccess("Event successfully removed from the platform.");
-      fetchEvents();
-    } catch (err: any) {
-      setError(err.message || "Failed to delete event.");
+      setSuccess("Event successfully removed from the registry.");
+      setEvents(prev => prev.filter(e => (e._id || e.id) !== id));
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to delete event.";
+      setError(message);
+      setTimeout(() => setError(null), 3000);
     } finally {
       setActionLoading(null);
     }
   };
 
-  // Helper: Format Date and Time
-  const formatDate = (dateString: string | undefined, startTime: string | undefined) => {
+  const formatDate = (dateString?: string, timeString?: string) => {
     if (!dateString) return 'TBA';
     try {
       const d = new Date(dateString);
-      const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', year: 'numeric' };
-      const dateFormatted = d.toLocaleDateString('en-US', options);
-      return `${dateFormatted} — ${startTime || '12:00 PM'}`;
+      const formattedDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return timeString ? `${formattedDate} • ${timeString}` : formattedDate;
     } catch {
-      return dateString;
+      return timeString ? `${dateString} • ${timeString}` : dateString;
     }
   };
 
-  // Helper: Determine Category Badge Styles
-  const getCategoryStyles = (category: string | undefined) => {
-    const cat = (category || 'other').toLowerCase();
-    if (cat.includes('outdoor') || cat.includes('sport') || cat.includes('watch party')) {
-      return 'bg-emerald-50 text-emerald-600 border border-emerald-100/50';
-    } else if (cat.includes('food') || cat.includes('culinary')) {
-      return 'bg-rose-50 text-rose-600 border border-rose-100/50';
-    } else if (cat.includes('music') || cat.includes('concert')) {
-      return 'bg-violet-50 text-violet-600 border border-violet-100/50';
-    } else if (cat.includes('fashion') || cat.includes('runway') || cat.includes('conference')) {
-      return 'bg-purple-50 text-purple-600 border border-purple-100/50';
-    } else if (cat.includes('art') || cat.includes('design') || cat.includes('expo')) {
-      return 'bg-pink-50 text-pink-600 border border-pink-100/50';
-    } else if (cat.includes('tech') || cat.includes('software')) {
-      return 'bg-blue-50 text-blue-600 border border-blue-100/50';
+  const getCategoryStyles = (category?: string) => {
+    const cat = (category || 'conference').toLowerCase();
+    if (cat.includes('tech') || cat.includes('software')) {
+      return 'bg-blue-50 text-blue-700 border-blue-200/70';
+    } else if (cat.includes('conference')) {
+      return 'bg-orange-50 text-orange-700 border-orange-200/70';
+    } else if (cat.includes('watch') || cat.includes('food')) {
+      return 'bg-purple-50 text-purple-700 border-purple-200/70';
     }
-    return 'bg-slate-50 text-slate-600 border border-slate-200/50';
+    return 'bg-emerald-50 text-emerald-700 border-emerald-200/70';
   };
 
-  // Helper: Calculate mock progress and price tags exactly matching the mockup theme
-  const getProgressAndPrice = (event: Event) => {
-    const totalCap = 150;
-    const sold = event.tickets_sold || 0;
-    const percent = Math.min(100, Math.round((sold / totalCap) * 100)) || 35;
-    const left = Math.max(0, totalCap - sold);
-    
-    // Assign clean mock pricing matching the mockup's aesthetic values ($20, $30, $40, $45, $60, $80)
-    let price = '$40';
-    const cat = (event.category || '').toLowerCase();
-    if (cat.includes('outdoor')) price = '$40';
-    else if (cat.includes('food')) price = '$45';
-    else if (cat.includes('music')) price = '$60';
-    else if (cat.includes('fashion')) price = '$30';
-    else if (cat.includes('art')) price = '$20';
-    else if (cat.includes('tech')) price = '$80';
+  // Distinct category list
+  const categories = ['All Categories', ...Array.from(new Set(events.map(e => e.category).filter(Boolean) as string[]))];
 
-    return { percent, left, price };
-  };
+  // Tab counts
+  const allCount = events.length;
+  const activeCount = events.filter(e => ['published', 'ongoing', 'active'].includes((e.status || '').toLowerCase())).length;
+  const completedCount = events.filter(e => ['completed', 'past'].includes((e.status || '').toLowerCase())).length;
+  const draftCount = events.filter(e => (e.status || '').toLowerCase() === 'draft').length;
 
-  const getGradient = (id: number | string | undefined) => {
-    const gradients = [
-      'from-blue-500 to-indigo-600',
-      'from-purple-500 to-pink-600',
-      'from-orange-400 to-red-500',
-      'from-emerald-400 to-cyan-500',
-      'from-rose-400 to-red-600',
-      'from-amber-400 to-orange-500'
-    ];
-    if (id === undefined || id === null) return `bg-gradient-to-br ${gradients[0]}`;
-    const index = typeof id === 'number' ? id % gradients.length : id.toString().length % gradients.length;
-    return `bg-gradient-to-br ${gradients[index]}`;
-  };
-
-  // Extract Categories dynamically for the dropdown filter
-  const categories = ['All Category', ...Array.from(new Set((events || []).map(e => e.category).filter((c): c is string => !!c)))];
-
-  // Filtering Logic
-  const filteredEvents = (events || []).filter(event => {
-    // 1. Search term filter
+  // Filtered events
+  const filteredEvents = events.filter(event => {
     const title = event.title || "";
+    const location = event.location || "";
     let ownerName = "";
     if (typeof event.owner === 'object' && event.owner !== null) {
-      ownerName = `${event.owner.firstName || ''} ${event.owner.lastName || ''}`.trim();
-    } else {
-      ownerName = (event.organizer_name || event.owner || "").toString();
+      ownerName = `${event.owner.firstName || ''} ${event.owner.lastName || ''}`;
     }
-    const location = event.location || "";
     const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          location.toLowerCase().includes(searchTerm.toLowerCase());
+                          location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          ownerName.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // 2. Category filter
-    const matchesCategory = selectedCategory === 'All Category' || event.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'All Categories' || event.category === selectedCategory;
 
-    // 3. Status tab filter
-    const status = (event.status || 'Published').toLowerCase();
-    let matchesTab = false;
+    const status = (event.status || '').toLowerCase();
+    let matchesTab = true;
     if (selectedTab === 'Active') {
-      matchesTab = status === 'published' || status === 'ongoing' || status === 'active';
+      matchesTab = ['published', 'ongoing', 'active'].includes(status);
+    } else if (selectedTab === 'Completed') {
+      matchesTab = ['completed', 'past'].includes(status);
     } else if (selectedTab === 'Draft') {
       matchesTab = status === 'draft';
-    } else if (selectedTab === 'Past') {
-      matchesTab = status === 'completed' || status === 'past';
     }
 
     return matchesSearch && matchesCategory && matchesTab;
   });
 
-  // Pagination calculations
+  // Pagination
   const totalFilteredCount = filteredEvents.length;
   const indexOfLastEvent = currentPage * eventsPerPage;
   const indexOfFirstEvent = indexOfLastEvent - eventsPerPage;
   const currentEvents = filteredEvents.slice(indexOfFirstEvent, indexOfLastEvent);
   const totalPages = Math.ceil(totalFilteredCount / eventsPerPage) || 1;
 
-  // Counts for each tab
-  const activeCount = events.filter(e => ['published', 'ongoing', 'active'].includes((e.status || 'Published').toLowerCase())).length;
-  const draftCount = events.filter(e => (e.status || '').toLowerCase() === 'draft').length;
-  const pastCount = events.filter(e => ['completed', 'past'].includes((e.status || '').toLowerCase())).length;
-
   return (
-    <div className="space-y-6 animate-fade-in relative font-sans text-slate-800 pb-20">
-      {/* Notifications Alert */}
+    <div className="space-y-6 animate-in fade-in duration-300 pb-16">
+      {/* Toast Alert */}
       <AnimatePresence>
         {(error || success) && (
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-24 right-8 z-50 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold text-sm ${
-              error ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'
+            className={`fixed top-20 right-8 z-50 px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 font-bold text-xs ${
+              error ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
             }`}
           >
-            {error ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}
+            {error ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
             <span>{error || success}</span>
-            <button onClick={() => { setError(null); setSuccess(null); }} className="ml-4 hover:opacity-70">
-              <X size={18} />
+            <button onClick={() => { setError(null); setSuccess(null); }} className="ml-3 hover:opacity-70">
+              <X size={14} />
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Top Header Bar Matching Mockup Design */}
-      <div className="flex items-center justify-between pb-4">
-        {/* Left: Breadcrumbs & Page Header */}
-        <div>
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-bold mb-1">
-            <span>Dashboard</span>
-            <span className="text-[10px]">/</span>
-            <span className="text-primary font-black">Events</span>
-          </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Events</h1>
+      {/* Control Bar: Tabs, Search, Category Filter, and View Mode */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs">
+        {/* Status Tab Selectors */}
+        <div className="flex items-center bg-slate-100 p-1 rounded-2xl w-fit flex-wrap gap-1">
+          {[
+            { id: 'All', label: 'All Events', count: allCount },
+            { id: 'Active', label: 'Live Now', count: activeCount },
+            { id: 'Completed', label: 'Completed', count: completedCount },
+            { id: 'Draft', label: 'Drafts', count: draftCount },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => { setSelectedTab(tab.id as 'All' | 'Active' | 'Completed' | 'Draft'); setCurrentPage(1); }}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                selectedTab === tab.id
+                  ? 'bg-orange-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                selectedTab === tab.id ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+              }`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
         </div>
 
-        {/* Right: Mockup Utilities (Alert, Settings, Profile Card) */}
-        <div className="flex items-center gap-5">
-          {/* Notifications */}
-          <button className="relative w-12 h-12 rounded-full bg-slate-950 flex items-center justify-center text-white hover:bg-slate-900 transition-all cursor-pointer shadow-md">
-            <Bell size={20} />
-            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-slate-950" />
-          </button>
-          {/* Settings */}
-          <button className="w-12 h-12 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 hover:bg-indigo-100 transition-all cursor-pointer">
-            <Settings size={20} />
-          </button>
-          {/* Profile Card */}
-          <div className="h-10 w-[1px] bg-slate-200 mx-1" />
-          <div className="flex items-center gap-3 cursor-pointer group">
-            <div className="text-right hidden md:block">
-              <p className="text-sm font-black text-slate-900 group-hover:text-primary transition-colors">Alex Jordan</p>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Admin</p>
-            </div>
-            <div className="w-12 h-12 rounded-full bg-orange-100 text-primary border border-orange-200 flex items-center justify-center font-black text-sm group-hover:border-primary transition-all">
-              AJ
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Redesigned Search & Filters Row */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
-        {/* Left: Tab selectors for Active, Draft, Past */}
-        <div className="flex items-center bg-slate-50 border border-slate-100 p-1.5 rounded-2xl w-fit">
-          <button 
-            onClick={() => { setSelectedTab('Active'); setCurrentPage(1); }}
-            className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-tight transition-all cursor-pointer ${selectedTab === 'Active' ? 'bg-primary text-white shadow-lg shadow-orange-500/25' : 'text-slate-500 hover:text-slate-900'}`}
-          >
-            Active <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-md ${selectedTab === 'Active' ? 'bg-white/20 text-white' : 'bg-slate-200/60 text-slate-600'}`}>{activeCount}</span>
-          </button>
-          <button 
-            onClick={() => { setSelectedTab('Draft'); setCurrentPage(1); }}
-            className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-tight transition-all cursor-pointer ${selectedTab === 'Draft' ? 'bg-primary text-white shadow-lg shadow-orange-500/25' : 'text-slate-500 hover:text-slate-900'}`}
-          >
-            Draft <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-md ${selectedTab === 'Draft' ? 'bg-white/20 text-white' : 'bg-slate-200/60 text-slate-600'}`}>{draftCount}</span>
-          </button>
-          <button 
-            onClick={() => { setSelectedTab('Past'); setCurrentPage(1); }}
-            className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-tight transition-all cursor-pointer ${selectedTab === 'Past' ? 'bg-primary text-white shadow-lg shadow-orange-500/25' : 'text-slate-500 hover:text-slate-900'}`}
-          >
-            Past <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-md ${selectedTab === 'Past' ? 'bg-white/20 text-white' : 'bg-slate-200/60 text-slate-600'}`}>{pastCount}</span>
-          </button>
-        </div>
-
-        {/* Right: Search, category filter, calendar filter, and view toggles */}
+        {/* Search & Filters */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Pill Search */}
-          <div className="relative flex-1 min-w-[200px] lg:max-w-xs group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={16} />
+          <div className="relative min-w-[220px] max-w-xs flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
             <input 
-              type="text" 
-              placeholder="Search event, location, etc..." 
+              type="text"
+              placeholder="Search event title, venue..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="w-full bg-slate-50 border border-slate-100 rounded-full py-2.5 pl-11 pr-4 outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/40 text-xs font-medium text-slate-800 transition-all shadow-inner"
+              className="w-full bg-slate-50 border border-slate-200/80 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:ring-3 focus:ring-orange-500/10 focus:border-orange-500/40 transition-all font-medium"
             />
           </div>
 
-          {/* Filter Trigger Box */}
-          <button className="bg-slate-950 hover:bg-slate-900 p-2.5 rounded-xl text-white transition-all cursor-pointer shadow-md">
-            <SlidersHorizontal size={16} />
-          </button>
-
-          {/* Category Dropdown */}
+          {/* Category Filter */}
           <div className="relative">
-            <select 
+            <select
               value={selectedCategory}
               onChange={(e) => { setSelectedCategory(e.target.value); setCurrentPage(1); }}
-              className="appearance-none bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-4 pr-10 outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/40 text-xs font-bold text-slate-700 cursor-pointer transition-all shadow-sm"
+              className="appearance-none bg-slate-50 border border-slate-200/80 rounded-xl py-2 pl-3.5 pr-8 text-xs font-bold text-slate-700 outline-none cursor-pointer focus:ring-3 focus:ring-orange-500/10 transition-all"
             >
               {categories.map((cat, idx) => (
-                <option key={idx} value={cat}>{cat ? (cat === 'All Category' ? 'All Category' : cat.charAt(0).toUpperCase() + cat.slice(1)) : ''}</option>
+                <option key={idx} value={cat}>{cat}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={13} />
           </div>
 
-          {/* Timeframe Dropdown */}
-          <div className="relative">
-            <select 
-              value={selectedTime}
-              onChange={(e) => setSelectedTime(e.target.value)}
-              className="appearance-none bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-4 pr-10 outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/40 text-xs font-bold text-slate-700 cursor-pointer transition-all shadow-sm"
-            >
-              <option>This Month</option>
-              <option>All Time</option>
-            </select>
-            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
-          </div>
-
-          {/* View Mode Toggle Toggles */}
-          <div className="flex items-center bg-slate-50 border border-slate-100 p-1 rounded-xl shadow-inner">
-            <button 
+          {/* Grid / List Mode */}
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl">
+            <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-all cursor-pointer ${viewMode === 'grid' ? 'bg-primary text-white shadow-md' : 'text-slate-400 hover:text-slate-900'}`}
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === 'grid' ? 'bg-white text-orange-600 shadow-xs' : 'text-slate-400 hover:text-slate-700'}`}
+              title="Grid view"
             >
-              <LayoutGrid size={16} />
+              <LayoutGrid size={15} />
             </button>
-            <button 
+            <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-all cursor-pointer ${viewMode === 'list' ? 'bg-primary text-white shadow-md' : 'text-slate-400 hover:text-slate-900'}`}
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === 'list' ? 'bg-white text-orange-600 shadow-xs' : 'text-slate-400 hover:text-slate-700'}`}
+              title="List view"
             >
-              <List size={16} />
+              <List size={15} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Main Redesigned Layout List/Grid Container */}
+      {/* Main Events Grid or List */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm">
-          <Loader2 className="animate-spin text-primary mb-4" size={48} />
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Compiling Live Registry...</p>
+        <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-slate-200/80 shadow-xs">
+          <Loader2 className="animate-spin text-orange-500 mb-3" size={36} />
+          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Loading Event Registry...</p>
         </div>
-      ) : (
-        <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
-          {currentEvents.length > 0 ? (
-            currentEvents.map((event) => {
-              const { percent, left, price } = getProgressAndPrice(event);
+      ) : currentEvents.length > 0 ? (
+        viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {currentEvents.map((event) => {
+              const eventId = event._id || event.id || '';
               const ownerName = typeof event.owner === 'object' && event.owner !== null
-                ? `${event.owner.firstName} ${event.owner.lastName}`
-                : (event.organizer_name || event.owner || 'Platform Admin');
+                ? `${event.owner.firstName || ''} ${event.owner.lastName || ''}`.trim()
+                : 'Eventeev Organizer';
+              const imageUrl = event.thumbnailImage || event.image_url;
 
               return (
-                <motion.div 
-                  key={event.id || event._id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.05)' }}
-                  className={`bg-white overflow-hidden group border border-slate-100 hover:border-primary/20 transition-all duration-300 shadow-sm ${
-                    viewMode === 'list' 
-                      ? 'flex flex-col lg:flex-row items-center justify-between p-5 rounded-[2rem] gap-6 w-full' 
-                      : 'rounded-[2.5rem]'
-                  }`}
+                <div
+                  key={eventId}
+                  className="bg-white rounded-3xl border border-slate-200/80 hover:border-orange-500/30 shadow-xs hover:shadow-lg hover:shadow-slate-200/60 transition-all duration-300 flex flex-col justify-between overflow-hidden group"
                 >
-                  {/* Event Thumbnail */}
+                  {/* Thumbnail Banner */}
                   <div 
-                    onClick={() => router.push(`/events/${event.id || event._id}`)}
-                    className={`cursor-pointer ${
-                      viewMode === 'list' ? 'h-36 w-56 shrink-0 rounded-2xl' : 'h-48 w-full'
-                    } ${event.image_url ? '' : getGradient(event.id || event._id)} relative overflow-hidden`}
+                    onClick={() => router.push(`/events/${eventId}`)}
+                    className="relative h-44 w-full bg-slate-100 cursor-pointer overflow-hidden"
                   >
-                    {event.image_url ? (
-                      <img src={event.image_url} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    {imageUrl ? (
+                      <img 
+                        src={imageUrl} 
+                        alt={event.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                      />
                     ) : (
-                      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
+                      <div className="w-full h-full bg-gradient-to-br from-orange-500 via-amber-500 to-rose-500 flex items-center justify-center text-white font-black text-lg">
+                        Eventeev
+                      </div>
                     )}
-                    <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 text-[9px] font-black text-slate-800 uppercase tracking-widest shadow-sm">
-                      Eventeev
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                    
+                    {/* Badges on Banner */}
+                    <div className="absolute top-3 left-3 flex items-center gap-2">
+                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider backdrop-blur-md shadow-xs ${getCategoryStyles(event.category)}`}>
+                        {event.category || 'Conference'}
+                      </span>
+                    </div>
+
+                    <div className="absolute top-3 right-3">
+                      <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-black/60 text-white backdrop-blur-md border border-white/20">
+                        {event.status || 'Active'}
+                      </span>
+                    </div>
+
+                    <div className="absolute bottom-3 left-3 text-white text-[11px] font-semibold flex items-center gap-1.5 drop-shadow-sm">
+                      <CalendarIcon size={12} />
+                      <span>{formatDate(event.startDate, event.startTime)}</span>
                     </div>
                   </div>
 
-                  {/* Redesigned Text & Description Columns */}
-                  <div className={`flex-1 min-w-0 ${viewMode === 'list' ? '' : 'p-6 pb-2'}`}>
-                    <div className="flex flex-col gap-1.5">
-                      {/* Category Pill */}
-                      <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest w-fit shadow-sm ${getCategoryStyles(event.category)}`}>
-                        {event.category || 'Event'}
-                      </span>
-                      {/* Title */}
+                  {/* Body Content */}
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
                       <h3 
-                        onClick={() => router.push(`/events/${event.id || event._id}`)}
-                        className="text-xl font-black text-slate-900 group-hover:text-primary transition-colors line-clamp-1 cursor-pointer tracking-tight"
+                        onClick={() => router.push(`/events/${eventId}`)}
+                        className="text-base font-black text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-1 cursor-pointer tracking-tight"
                       >
                         {event.title}
                       </h3>
-                      {/* Description / Subtext Excerpt */}
-                      <p className="text-xs text-slate-400 font-medium line-clamp-2 leading-relaxed mb-1 pr-4">
-                        {event.description || "Join this premium event organized on Eventeev. Manage tickets, details, and schedules instantly."}
+                      <p className="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+                        {event.description || "Official gathering and community event organized on the Eventeev platform."}
                       </p>
-                      {/* Owner subtag */}
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                        BY <span className="text-slate-700 font-black">{ownerName}</span>
-                      </span>
                     </div>
-                  </div>
 
-                  {/* Metadata Icons Stack (Vertical in list, horizontal in grid) */}
-                  <div className={`flex flex-col gap-2.5 min-w-[220px] ${viewMode === 'list' ? '' : 'px-6 pb-4'}`}>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 font-bold">
-                      <div className="w-7 h-7 rounded-lg bg-orange-50/50 flex items-center justify-center text-primary">
-                        <MapPin size={14} />
+                    <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <MapPin size={13} className="text-orange-500 shrink-0" />
+                        <span className="truncate">{event.location || 'Online / Virtual'}</span>
                       </div>
-                      <span className="truncate max-w-[200px]" title={event.location}>{event.location || 'Online / Virtual'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 font-bold">
-                      <div className="w-7 h-7 rounded-lg bg-orange-50/50 flex items-center justify-center text-primary">
-                        <CalendarIcon size={14} />
+                      <div className="flex items-center justify-between text-xs text-slate-400">
+                        <span>Organized by <strong className="text-slate-700">{ownerName}</strong></span>
+                        <span className="font-bold text-orange-600">{event.type || 'Virtual'}</span>
                       </div>
-                      <span>{formatDate(event.startDate || event.start_date || event.date, event.startTime)}</span>
                     </div>
                   </div>
 
-                  {/* Check-in Ticket Sold Progress Bar Column */}
-                  <div className={`flex flex-col gap-1.5 w-40 shrink-0 ${viewMode === 'list' ? '' : 'px-6 pb-4'}`}>
-                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden relative shadow-inner">
-                      <div 
-                        className="h-full bg-primary rounded-full transition-all duration-1000" 
-                        style={{ width: `${percent}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                      <span>{percent}% Ticket Sold</span>
-                    </div>
-                  </div>
-
-                  {/* Ticket Container Square Box */}
-                  <div className={`flex flex-col items-center justify-center w-24 h-20 bg-slate-50 border border-slate-100/50 rounded-2xl shrink-0 ${viewMode === 'list' ? '' : 'hidden'}`}>
-                    <div className="p-1.5 bg-orange-50 text-primary rounded-xl mb-1 border border-orange-100/50">
-                      <TicketIcon size={16} />
-                    </div>
-                    <span className="text-sm font-black text-slate-900 leading-none">{left}</span>
-                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Tickets Left</span>
-                  </div>
-
-                  {/* High Fidelity Price Tag Box */}
-                  <div className={`flex items-center justify-center w-24 h-20 bg-purple-50 border border-purple-100/50 rounded-2xl shrink-0 ${viewMode === 'list' ? '' : 'hidden'}`}>
-                    <span className="text-2xl font-black text-purple-600">{price}</span>
-                  </div>
-
-                  {/* Actions (Details/Delete Button) for Grid View */}
-                  {viewMode === 'grid' && (
-                    <div className="p-6 pt-2 flex items-center gap-3 border-t border-slate-50 bg-slate-50/50">
-                      <button 
-                        onClick={() => router.push(`/events/${event.id || event._id}`)}
-                        className="flex-1 bg-white hover:bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl transition-all text-xs border border-slate-100 shadow-sm cursor-pointer"
-                      >
-                        Details
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteEvent(event.id || event._id!)}
-                        disabled={actionLoading === `delete-${event.id || event._id}`}
-                        className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all border border-red-100 cursor-pointer"
-                      >
-                        {actionLoading === `delete-${event.id || event._id}` ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Mini floating delete icon in list view */}
-                  {viewMode === 'list' && (
-                    <button 
-                      onClick={() => handleDeleteEvent(event.id || event._id!)}
-                      disabled={actionLoading === `delete-${event.id || event._id}`}
-                      className="p-3.5 rounded-2xl bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all border border-slate-100 cursor-pointer shadow-sm ml-auto lg:ml-0 self-end lg:self-center"
+                  {/* Actions Bar */}
+                  <div className="px-5 py-3.5 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-3">
+                    <button
+                      onClick={() => router.push(`/events/${eventId}`)}
+                      className="flex-1 py-2 px-3 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
                     >
-                      {actionLoading === `delete-${event.id || event._id}` ? <Loader2 className="animate-spin" size={14} /> : <Trash2 size={14} />}
+                      <Eye size={13} />
+                      <span>Event Details</span>
                     </button>
-                  )}
-                </motion.div>
+                    <button
+                      onClick={() => handleDeleteEvent(eventId)}
+                      disabled={actionLoading === eventId}
+                      className="p-2 rounded-xl bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 transition-colors cursor-pointer"
+                      title="Delete event"
+                    >
+                      {actionLoading === eventId ? <Loader2 size={14} className="animate-spin text-rose-500" /> : <Trash2 size={14} />}
+                    </button>
+                  </div>
+                </div>
               );
-            })
-          ) : (
-            <div className="col-span-full py-24 text-center bg-white rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center">
-              <div className="w-16 h-16 rounded-2xl bg-orange-50 text-primary flex items-center justify-center border border-orange-100 mb-4 animate-bounce">
-                <AlertCircle size={28} />
-              </div>
-              <p className="text-slate-400 font-black text-lg">No events found matching your filter criteria.</p>
-              <button onClick={() => { setSearchTerm(''); setSelectedCategory('All Category'); }} className="mt-3 text-sm text-primary font-black hover:underline cursor-pointer">Clear active filters</button>
-            </div>
-          )}
+            })}
+          </div>
+        ) : (
+          /* List View Mode */
+          <div className="space-y-3">
+            {currentEvents.map((event) => {
+              const eventId = event._id || event.id || '';
+              const ownerName = typeof event.owner === 'object' && event.owner !== null
+                ? `${event.owner.firstName || ''} ${event.owner.lastName || ''}`.trim()
+                : 'Eventeev Organizer';
+              const imageUrl = event.thumbnailImage || event.image_url;
+
+              return (
+                <div
+                  key={eventId}
+                  className="bg-white p-4 rounded-3xl border border-slate-200/80 hover:border-orange-500/30 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                >
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
+                    <div 
+                      onClick={() => router.push(`/events/${eventId}`)}
+                      className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden shrink-0 cursor-pointer relative"
+                    >
+                      {imageUrl ? (
+                        <img src={imageUrl} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      ) : (
+                        <div className="w-full h-full bg-orange-500 flex items-center justify-center text-white font-bold text-xs">EV</div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${getCategoryStyles(event.category)}`}>
+                          {event.category || 'Conference'}
+                        </span>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider bg-slate-100 text-slate-600">
+                          {event.status || 'Active'}
+                        </span>
+                      </div>
+                      <h3 
+                        onClick={() => router.push(`/events/${eventId}`)}
+                        className="text-sm font-black text-slate-900 group-hover:text-orange-600 transition-colors truncate cursor-pointer"
+                      >
+                        {event.title}
+                      </h3>
+                      <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
+                        <span>{formatDate(event.startDate)}</span>
+                        <span>•</span>
+                        <span className="truncate max-w-xs">{event.location || 'Virtual'}</span>
+                        <span>•</span>
+                        <span>By {ownerName}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                    <button
+                      onClick={() => router.push(`/events/${eventId}`)}
+                      className="px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Eye size={13} />
+                      <span>Details</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteEvent(eventId)}
+                      disabled={actionLoading === eventId}
+                      className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-colors cursor-pointer"
+                    >
+                      {actionLoading === eventId ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      ) : (
+        <div className="py-20 text-center bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col items-center justify-center p-6">
+          <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-200 mb-3">
+            <CalendarIcon size={24} />
+          </div>
+          <h4 className="text-base font-bold text-slate-800">No events found matching your filter</h4>
+          <p className="text-xs text-slate-400 mt-1">Try switching to &quot;All Events&quot; or clearing your search term.</p>
+          <button
+            onClick={() => { setSelectedTab('All'); setSearchTerm(''); setSelectedCategory('All Categories'); }}
+            className="mt-4 px-4 py-2 rounded-xl bg-orange-600 text-white text-xs font-bold hover:bg-orange-500 transition-colors cursor-pointer shadow-xs"
+          >
+            Reset Filters
+          </button>
         </div>
       )}
 
-      {/* Redesigned Pagination Footer Section */}
+      {/* Pagination Controls */}
       {!isLoading && filteredEvents.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-slate-100 mt-8">
-          {/* Left: Showing items count selection */}
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
-            <span>Showing</span>
-            <div className="relative">
-              <select 
-                value={eventsPerPage}
-                onChange={(e) => { setEventsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                className="appearance-none bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 outline-none text-xs font-black text-slate-700 cursor-pointer"
-              >
-                <option value={4}>4</option>
-                <option value={6}>6</option>
-                <option value={10}>10</option>
-                <option value={15}>15</option>
-              </select>
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
-            </div>
-            <span>out of {totalFilteredCount} events</span>
-          </div>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200/80">
+          <p className="text-xs font-bold text-slate-400">
+            Showing <strong className="text-slate-700">{indexOfFirstEvent + 1}</strong> to <strong className="text-slate-700">{Math.min(indexOfLastEvent, totalFilteredCount)}</strong> of <strong className="text-slate-700">{totalFilteredCount}</strong> events
+          </p>
 
-          {/* Right: Premium pagination navigator */}
-          <div className="flex items-center gap-2">
-            <button 
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-black text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
+              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               Previous
             </button>
-            {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(page => (
-              <button 
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`w-9 h-9 rounded-xl text-xs font-black transition-all cursor-pointer shadow-sm ${page === currentPage ? 'bg-primary text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  page === currentPage
+                    ? 'bg-orange-600 text-white shadow-xs'
+                    : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
               >
                 {page}
               </button>
             ))}
-            <button 
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-black text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
+              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               Next
             </button>

@@ -16,7 +16,7 @@ export const api = {
     const headers = new Headers(fetchOptions.headers || {});
     headers.set('Content-Type', 'application/json');
     
-    if (auth) {
+    if (auth && typeof window !== 'undefined') {
       const token = localStorage.getItem('eventeev_admin_token');
       if (token) {
         headers.set('x-auth-token', token);
@@ -29,7 +29,7 @@ export const api = {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = (await response.json().catch(() => ({}))) as { message?: string };
       throw new Error(errorData.message || `API Error: ${response.status}`);
     }
 
@@ -40,7 +40,7 @@ export const api = {
     return this.request<T>(endpoint, { ...options, method: 'GET' });
   },
 
-  post<T>(endpoint: string, body: any, options?: RequestOptions) {
+  post<T>(endpoint: string, body: unknown, options?: RequestOptions) {
     return this.request<T>(endpoint, { 
       ...options, 
       method: 'POST', 
@@ -48,7 +48,7 @@ export const api = {
     });
   },
 
-  put<T>(endpoint: string, body: any, options?: RequestOptions) {
+  put<T>(endpoint: string, body: unknown, options?: RequestOptions) {
     return this.request<T>(endpoint, { 
       ...options, 
       method: 'PUT', 
