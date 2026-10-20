@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { 
-  Gamepad2, 
   Plus, 
   Search, 
   Trash2, 
@@ -19,9 +18,11 @@ import {
   Layers,
   Globe,
   Clock,
-  Check
+  Check,
+  Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 
 interface Question {
@@ -55,29 +56,12 @@ interface Quiz {
   createdAt: string;
 }
 
-interface Event {
-  _id: string;
-  title: string;
-}
-
-const CATEGORIES = [
-  'Science',
-  'Trivia',
-  'Music',
-  'History',
-  'Geography',
-  'Pop Culture',
-  'Gaming',
-  'Art',
-  'General'
-];
-
 const SAMPLE_QUIZ_TEMPLATE = {
   title: "The Ultimate Space Trivia",
   category: "Science",
   description: "Embark on an interstellar journey testing your knowledge of galaxies, astronauts, and black holes.",
   author: "Sarah J.",
-  thumbnail: "/thumbnails/space_trivia.png",
+  thumbnail: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80",
   level: "Med",
   avgTime: "15m",
   isTemplate: true,
@@ -85,6 +69,7 @@ const SAMPLE_QUIZ_TEMPLATE = {
   questions: [
     {
       text: "What is the closest planet to the Sun?",
+      mediaUrl: "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=600&auto=format&fit=crop&q=80",
       type: "Quiz",
       options: ["Venus", "Mercury", "Mars", "Earth"],
       correctAnswer: [1],
@@ -94,6 +79,7 @@ const SAMPLE_QUIZ_TEMPLATE = {
     },
     {
       text: "Which galaxy is on a collision course with our Milky Way?",
+      mediaUrl: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=600&auto=format&fit=crop&q=80",
       type: "Quiz",
       options: ["Andromeda", "Triangulum", "Sombrero", "Whirlpool"],
       correctAnswer: [0],
@@ -103,6 +89,7 @@ const SAMPLE_QUIZ_TEMPLATE = {
     },
     {
       text: "The Moon has an active atmosphere with breathable oxygen.",
+      mediaUrl: "https://images.unsplash.com/photo-1522030299830-16b8d3d049fe?w=600&auto=format&fit=crop&q=80",
       type: "True/False",
       options: ["True", "False"],
       correctAnswer: [1],
@@ -115,9 +102,7 @@ const SAMPLE_QUIZ_TEMPLATE = {
 
 export default function GamesManagementPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [previewQuiz, setPreviewQuiz] = useState<Quiz | null>(null);
   
@@ -133,37 +118,11 @@ export default function GamesManagementPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Manual Form State
-  const [newQuiz, setNewQuiz] = useState({
-    title: '',
-    description: '',
-    category: 'Trivia',
-    author: 'Eventeev Staff',
-    thumbnail: '/thumbnails/space_trivia.png',
-    level: 'Med',
-    isTemplate: true,
-    eventId: '',
-    questions: [
-      { 
-        text: '', 
-        type: 'Quiz', 
-        options: ['', '', '', ''], 
-        correctAnswer: [0], 
-        points: 1000, 
-        timeLimit: 20 
-      }
-    ]
-  });
-
   const fetchData = async (showLoading = false) => {
     try {
       if (showLoading) setIsLoading(true);
-      const [quizzesData, eventsData] = await Promise.all([
-        api.get<Quiz[]>('/admin/games/quizzes').catch(() => []),
-        api.get<{ events: Event[] }>('/admin/events').catch(() => ({ events: [] }))
-      ]);
+      const quizzesData = await api.get<Quiz[]>('/admin/games/quizzes').catch(() => []);
       setQuizzes(Array.isArray(quizzesData) ? quizzesData : []);
-      setEvents(eventsData.events || []);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to load games data.";
       setError(message);
@@ -176,13 +135,9 @@ export default function GamesManagementPage() {
     let ignore = false;
     const loadData = async () => {
       try {
-        const [quizzesData, eventsData] = await Promise.all([
-          api.get<Quiz[]>('/admin/games/quizzes').catch(() => []),
-          api.get<{ events: Event[] }>('/admin/events').catch(() => ({ events: [] }))
-        ]);
+        const quizzesData = await api.get<Quiz[]>('/admin/games/quizzes').catch(() => []);
         if (!ignore) {
           setQuizzes(Array.isArray(quizzesData) ? quizzesData : []);
-          setEvents(eventsData.events || []);
         }
       } catch (err: unknown) {
         if (!ignore) {
@@ -265,7 +220,17 @@ export default function GamesManagementPage() {
         isFeatured: q.isFeatured !== undefined ? q.isFeatured : true,
         category: q.category || 'Trivia',
         author: q.author || 'Eventeev Staff',
-        thumbnail: q.thumbnail || '/thumbnails/space_trivia.png',
+        thumbnail: q.thumbnail || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=80',
+        questions: (q.questions || []).map((question: Partial<Question> & { image?: string; imageUrl?: string }) => ({
+          text: question.text || '',
+          mediaUrl: question.mediaUrl || question.image || question.imageUrl || undefined,
+          type: question.type || 'Quiz',
+          options: question.options || [],
+          correctAnswer: question.correctAnswer || [0],
+          timeLimit: question.timeLimit || 20,
+          points: question.points || 1000,
+          isMultiSelect: !!question.isMultiSelect
+        }))
       }));
 
       await api.post('/admin/games/quizzes', payload.length === 1 ? payload[0] : payload);
@@ -308,6 +273,7 @@ export default function GamesManagementPage() {
       isFeatured: quiz.isFeatured !== false,
       questions: quiz.questions.map(q => ({
         text: q.text,
+        mediaUrl: q.mediaUrl || undefined,
         type: q.type || 'Quiz',
         options: q.options,
         correctAnswer: q.correctAnswer,
@@ -326,46 +292,6 @@ export default function GamesManagementPage() {
     downloadAnchor.remove();
   };
 
-  // Manual Creation
-  const handleCreateQuiz = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newQuiz.isTemplate && !newQuiz.eventId) {
-      setError("Please select an event or mark as a Platform Template.");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const payload = {
-        ...newQuiz,
-        eventId: newQuiz.isTemplate ? null : newQuiz.eventId,
-      };
-
-      await api.post('/admin/games/quizzes', payload);
-      setSuccess("New quiz challenge launched successfully!");
-      setIsCreateModalOpen(false);
-      setNewQuiz({
-        title: '',
-        description: '',
-        category: 'Trivia',
-        author: 'Eventeev Staff',
-        thumbnail: '/thumbnails/space_trivia.png',
-        level: 'Med',
-        isTemplate: true,
-        eventId: '',
-        questions: [{ text: '', type: 'Quiz', options: ['', '', '', ''], correctAnswer: [0], points: 1000, timeLimit: 20 }]
-      });
-      fetchData(true);
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to create game.";
-      setError(message);
-      setTimeout(() => setError(null), 3000);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleDeleteQuiz = async (id: string) => {
     if (!confirm("Are you sure you want to retire this game?")) return;
     try {
@@ -378,24 +304,6 @@ export default function GamesManagementPage() {
       setError(message);
       setTimeout(() => setError(null), 3000);
     }
-  };
-
-  const handleAddQuestion = () => {
-    setNewQuiz(prev => ({
-      ...prev,
-      questions: [
-        ...prev.questions,
-        { text: '', type: 'Quiz', options: ['', '', '', ''], correctAnswer: [0], points: 1000, timeLimit: 20 }
-      ]
-    }));
-  };
-
-  const handleRemoveQuestion = (index: number) => {
-    if (newQuiz.questions.length <= 1) return;
-    setNewQuiz(prev => ({
-      ...prev,
-      questions: prev.questions.filter((_, i) => i !== index)
-    }));
   };
 
   const filteredQuizzes = quizzes.filter(quiz => {
@@ -537,13 +445,13 @@ export default function GamesManagementPage() {
             <span>Upload Quiz JSON</span>
           </button>
 
-          <button 
-            onClick={() => setIsCreateModalOpen(true)}
+          <Link 
+            href="/games/create"
             className="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
           >
             <Plus size={15} />
             <span>Create Quiz</span>
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -802,8 +710,12 @@ export default function GamesManagementPage() {
             >
               <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-200 font-bold shrink-0">
-                    <Puzzle size={20} />
+                  <div className="w-10 h-10 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-200 font-bold shrink-0 overflow-hidden">
+                    {previewQuiz.thumbnail ? (
+                      <img src={previewQuiz.thumbnail} alt={previewQuiz.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <Puzzle size={20} />
+                    )}
                   </div>
                   <div>
                     <h3 className="text-base font-black text-slate-900 tracking-tight">{previewQuiz.title}</h3>
@@ -820,6 +732,21 @@ export default function GamesManagementPage() {
                 </button>
               </div>
 
+              {/* Cover Banner if thumbnail exists */}
+              {previewQuiz.thumbnail && (
+                <div className="relative h-32 w-full rounded-2xl overflow-hidden mt-4 shrink-0 border border-slate-200">
+                  <img src={previewQuiz.thumbnail} alt={previewQuiz.title} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent flex items-end p-3.5">
+                    <div>
+                      <span className="text-[9px] font-bold text-orange-300 uppercase tracking-wider bg-orange-950/70 backdrop-blur-xs px-2 py-0.5 rounded border border-orange-500/30">
+                        {previewQuiz.category}
+                      </span>
+                      <h4 className="text-sm font-black text-white mt-0.5">{previewQuiz.title}</h4>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-4 overflow-y-auto space-y-4 pr-1 flex-grow">
                 {previewQuiz.questions?.map((q, qIdx) => (
                   <div key={qIdx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
@@ -833,6 +760,20 @@ export default function GamesManagementPage() {
                         {q.timeLimit || 20}s
                       </span>
                     </div>
+
+                    {/* Allocated Question Image preview */}
+                    {q.mediaUrl && (
+                      <div className="rounded-xl overflow-hidden border border-slate-200 bg-black/5 relative max-h-48 flex items-center justify-center">
+                        <img 
+                          src={q.mediaUrl} 
+                          alt={`Question ${qIdx + 1} Visual`} 
+                          className="w-full h-44 object-cover" 
+                        />
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-[10px] font-bold text-white flex items-center gap-1">
+                          <ImageIcon size={11} /> Question Image
+                        </div>
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                       {q.options?.map((opt, optIdx) => {
@@ -873,221 +814,6 @@ export default function GamesManagementPage() {
         )}
       </AnimatePresence>
 
-      {/* Manual Add Quiz Modal */}
-      <AnimatePresence>
-        {isCreateModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white w-full max-w-2xl rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 relative max-h-[90vh] overflow-y-auto"
-            >
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                <div>
-                  <h3 className="text-base font-black text-slate-900 tracking-tight">Create Quiz Challenge</h3>
-                  <p className="text-xs text-slate-400 font-medium">Build interactive trivia with questions, answers, and time limits.</p>
-                </div>
-                <button 
-                  onClick={() => setIsCreateModalOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <form onSubmit={handleCreateQuiz} className="mt-5 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Game Title</label>
-                    <input 
-                      required
-                      type="text" 
-                      placeholder="e.g. Lagos Tech Quiz"
-                      value={newQuiz.title}
-                      onChange={(e) => setNewQuiz({ ...newQuiz, title: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 outline-none focus:ring-3 focus:ring-orange-500/10 focus:border-orange-500/40"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Category</label>
-                    <select 
-                      value={newQuiz.category}
-                      onChange={(e) => setNewQuiz({ ...newQuiz, category: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 outline-none cursor-pointer"
-                    >
-                      {CATEGORIES.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Author Attribution</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Sarah J. or Eventeev Staff"
-                      value={newQuiz.author}
-                      onChange={(e) => setNewQuiz({ ...newQuiz, author: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Cover Thumbnail URL</label>
-                    <input 
-                      type="text" 
-                      placeholder="https://... or /thumbnails/space_trivia.png"
-                      value={newQuiz.thumbnail}
-                      onChange={(e) => setNewQuiz({ ...newQuiz, thumbnail: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Target Scope Checkbox */}
-                <div className="p-3.5 rounded-2xl bg-orange-50/60 border border-orange-200/60 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold text-orange-950">Save as Global Platform Template</p>
-                    <p className="text-[11px] text-orange-700/80">Make this quiz selectable by all organizers in the Featured Quizzes library.</p>
-                  </div>
-                  <input 
-                    type="checkbox" 
-                    checked={newQuiz.isTemplate}
-                    onChange={(e) => setNewQuiz({ ...newQuiz, isTemplate: e.target.checked })}
-                    className="w-4 h-4 accent-orange-600 rounded cursor-pointer"
-                  />
-                </div>
-
-                {!newQuiz.isTemplate && (
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Bind to Specific Event</label>
-                    <select 
-                      required={!newQuiz.isTemplate}
-                      value={newQuiz.eventId}
-                      onChange={(e) => setNewQuiz({ ...newQuiz, eventId: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 outline-none cursor-pointer"
-                    >
-                      <option value="">Select an event from registry...</option>
-                      {events.map(event => (
-                        <option key={event._id} value={event._id}>{event.title}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Description</label>
-                  <textarea 
-                    rows={2}
-                    placeholder="Short description for participants..."
-                    value={newQuiz.description}
-                    onChange={(e) => setNewQuiz({ ...newQuiz, description: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-900 outline-none focus:ring-3 focus:ring-orange-500/10 focus:border-orange-500/40 resize-none"
-                  />
-                </div>
-
-                {/* Dynamic Questions Builder */}
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Questions ({newQuiz.questions.length})</label>
-                    <button 
-                      type="button"
-                      onClick={handleAddQuestion}
-                      className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 cursor-pointer"
-                    >
-                      <Plus size={13} /> Add Question
-                    </button>
-                  </div>
-
-                  <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-                    {newQuiz.questions.map((q, qIndex) => (
-                      <div key={qIndex} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-bold text-slate-700">Q{qIndex + 1}.</span>
-                          <input 
-                            required
-                            type="text"
-                            placeholder="Enter question text..."
-                            value={q.text}
-                            onChange={(e) => {
-                              const updated = [...newQuiz.questions];
-                              updated[qIndex].text = e.target.value;
-                              setNewQuiz({ ...newQuiz, questions: updated });
-                            }}
-                            className="flex-grow bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-900 outline-none"
-                          />
-                          {newQuiz.questions.length > 1 && (
-                            <button 
-                              type="button"
-                              onClick={() => handleRemoveQuestion(qIndex)}
-                              className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Options */}
-                        <div className="grid grid-cols-2 gap-2 pt-1">
-                          {q.options.map((opt, optIndex) => (
-                            <div key={optIndex} className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2 py-1">
-                              <input 
-                                type="radio"
-                                name={`correct-${qIndex}`}
-                                checked={q.correctAnswer[0] === optIndex}
-                                onChange={() => {
-                                  const updated = [...newQuiz.questions];
-                                  updated[qIndex].correctAnswer = [optIndex];
-                                  setNewQuiz({ ...newQuiz, questions: updated });
-                                }}
-                                className="accent-orange-600 cursor-pointer"
-                                title="Mark as correct answer"
-                              />
-                              <input 
-                                required
-                                type="text"
-                                placeholder={`Option ${optIndex + 1}`}
-                                value={opt}
-                                onChange={(e) => {
-                                  const updated = [...newQuiz.questions];
-                                  updated[qIndex].options[optIndex] = e.target.value;
-                                  setNewQuiz({ ...newQuiz, questions: updated });
-                                }}
-                                className="w-full text-[11px] font-medium outline-none bg-transparent"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
-                  <button 
-                    type="button"
-                    onClick={() => setIsCreateModalOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit"
-                    disabled={isLoading}
-                    className="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
-                  >
-                    {isLoading ? <Loader2 size={13} className="animate-spin" /> : <Gamepad2 size={13} />}
-                    <span>Deploy Game</span>
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
